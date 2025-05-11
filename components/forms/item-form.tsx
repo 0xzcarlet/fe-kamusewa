@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ImagePlus, X, Upload } from "lucide-react"
 
 interface ItemFormProps {
   open: boolean
@@ -28,6 +29,7 @@ interface ItemFormProps {
     stock: number
     description: string
     status: string
+    image?: string
   }
   onSubmit: (data: any) => void
 }
@@ -40,8 +42,11 @@ export function ItemForm({ open, onOpenChange, initialData, onSubmit }: ItemForm
     stock: initialData?.stock || 1,
     description: initialData?.description || "",
     status: initialData?.status || "Tersedia",
+    image: initialData?.image || "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(initialData?.image || null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -55,6 +60,25 @@ export function ItemForm({ open, onOpenChange, initialData, onSubmit }: ItemForm
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // In a real app, you would upload the file to a server and get a URL back
+      // For this demo, we'll create a local object URL
+      const imageUrl = URL.createObjectURL(file)
+      setPreviewImage(imageUrl)
+      setFormData((prev) => ({ ...prev, image: imageUrl }))
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setPreviewImage(null)
+    setFormData((prev) => ({ ...prev, image: "" }))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,6 +203,55 @@ export function ItemForm({ open, onOpenChange, initialData, onSubmit }: ItemForm
                   <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Foto Barang</Label>
+              <div className="flex flex-col gap-4">
+                {previewImage ? (
+                  <div className="relative w-full h-48 rounded-md overflow-hidden border">
+                    <img
+                      src={previewImage || "/placeholder.svg"}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-md cursor-pointer bg-muted/50 hover:bg-muted"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImagePlus className="h-10 w-10 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">Klik untuk mengunggah foto</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                {!previewImage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Pilih Foto
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>

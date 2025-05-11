@@ -14,11 +14,19 @@ import { ItemForm } from "@/components/forms/item-form"
 import { TablePagination } from "@/components/table-pagination"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { ResponsiveNavbar } from "@/components/responsive-navbar"
+import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { ItemDetail } from "@/components/item-detail"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function ItemsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<any>(null)
+  const [showDetailDialog, setShowDetailDialog] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -26,8 +34,8 @@ export default function ItemsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
 
-  // Sample data for items
-  const allItems = [
+  // Sample data for items with images
+  const [items, setItems] = useState([
     {
       id: 1,
       name: "Kamera Sony A7III",
@@ -36,6 +44,7 @@ export default function ItemsPage() {
       stock: 5,
       status: "Tersedia",
       description: "Kamera mirrorless full-frame dengan kualitas gambar yang sangat baik",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 2,
@@ -45,6 +54,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Tersedia",
       description: "Sound system lengkap dengan speaker, mixer, dan mikrofon",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 3,
@@ -54,6 +64,7 @@ export default function ItemsPage() {
       stock: 4,
       status: "Tersedia",
       description: "Proyektor HD dengan brightness tinggi",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 4,
@@ -63,6 +74,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Disewa",
       description: "Laptop MacBook Pro 16 inch dengan spesifikasi tinggi",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 5,
@@ -72,6 +84,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Drone dengan kamera 4K dan stabilisasi gambar",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 6,
@@ -81,6 +94,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Disewa",
       description: "Lensa zoom standar dengan aperture f/2.8",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 7,
@@ -90,6 +104,7 @@ export default function ItemsPage() {
       stock: 8,
       status: "Tersedia",
       description: "Tripod profesional dengan kepala fluid untuk video",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 8,
@@ -99,6 +114,7 @@ export default function ItemsPage() {
       stock: 6,
       status: "Tersedia",
       description: "Panel lampu LED dengan temperatur warna yang dapat diatur",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 9,
@@ -108,6 +124,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Kamera mirrorless full-frame dengan kemampuan video 8K",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 10,
@@ -117,6 +134,7 @@ export default function ItemsPage() {
       stock: 4,
       status: "Tersedia",
       description: "Mikrofon shotgun untuk video dan film",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 11,
@@ -126,6 +144,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Disewa",
       description: "Proyektor 4K untuk home theater",
+      image: "/placeholder.svg?height=200&width=300",
     },
     {
       id: 12,
@@ -135,65 +154,12 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Laptop premium dengan layar 4K",
+      image: "/placeholder.svg?height=200&width=300",
     },
-    {
-      id: 13,
-      name: "Drone DJI Mini",
-      category: "Drone & Peralatan Aerial",
-      price: 200000,
-      stock: 5,
-      status: "Tersedia",
-      description: "Drone ringan dengan kamera HD",
-    },
-    {
-      id: 14,
-      name: "Lensa Sony 70-200mm",
-      category: "Lensa Kamera",
-      price: 200000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Lensa telefoto zoom dengan stabilisasi gambar",
-    },
-    {
-      id: 15,
-      name: "Gimbal DJI Ronin",
-      category: "Tripod & Stabilizer",
-      price: 150000,
-      stock: 3,
-      status: "Disewa",
-      description: "Stabilizer kamera profesional",
-    },
-    {
-      id: 16,
-      name: "Aputure LED Light",
-      category: "Lighting",
-      price: 120000,
-      stock: 4,
-      status: "Tersedia",
-      description: "Lampu LED profesional dengan kontrol warna",
-    },
-    {
-      id: 17,
-      name: "Kamera Blackmagic Pocket",
-      category: "Kamera & Fotografi",
-      price: 400000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Kamera sinema dengan dynamic range tinggi",
-    },
-    {
-      id: 18,
-      name: "Mixer Audio Yamaha",
-      category: "Audio & Sound System",
-      price: 180000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Mixer audio 16 channel dengan efek built-in",
-    },
-  ]
+  ])
 
   // Filter and paginate items
-  const filteredItems = allItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -215,9 +181,50 @@ export default function ItemsPage() {
     setIsFormOpen(true)
   }
 
+  const handleViewItem = (item: any) => {
+    setSelectedItem(item)
+    setShowDetailDialog(true)
+  }
+
+  const handleDeleteItem = (item: any) => {
+    setItemToDelete(item)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      // In a real app, you would call an API to delete the item
+      setItems((prevItems) => prevItems.filter((item) => item.id !== itemToDelete.id))
+      toast({
+        title: "Barang berhasil dihapus",
+        description: `${itemToDelete.name} telah dihapus dari daftar barang.`,
+      })
+      setShowDeleteDialog(false)
+      setItemToDelete(null)
+    }
+  }
+
   const handleFormSubmit = (data: any) => {
-    console.log("Form submitted:", data)
-    // Here you would typically save the data to your backend
+    // In a real app, you would call an API to save the data
+    if (data.id) {
+      // Update existing item
+      setItems((prevItems) => prevItems.map((item) => (item.id === data.id ? { ...item, ...data } : item)))
+      toast({
+        title: "Barang berhasil diperbarui",
+        description: `Perubahan pada ${data.name} telah disimpan.`,
+      })
+    } else {
+      // Add new item
+      const newItem = {
+        ...data,
+        id: items.length > 0 ? Math.max(...items.map((item) => item.id)) + 1 : 1,
+      }
+      setItems((prevItems) => [...prevItems, newItem])
+      toast({
+        title: "Barang berhasil ditambahkan",
+        description: `${data.name} telah ditambahkan ke daftar barang.`,
+      })
+    }
     setIsFormOpen(false)
   }
 
@@ -238,6 +245,12 @@ export default function ItemsPage() {
   const handleCategoryFilterChange = (value: string) => {
     setCategoryFilter(value)
     setCurrentPage(1) // Reset to first page when filtering
+  }
+
+  const handleEditFromDetail = () => {
+    setEditingItem(selectedItem)
+    setShowDetailDialog(false)
+    setIsFormOpen(true)
   }
 
   return (
@@ -305,7 +318,17 @@ export default function ItemsPage() {
                     <TableCell className="font-medium">{item.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        {item.image ? (
+                          <div className="h-8 w-8 rounded-md overflow-hidden">
+                            <img
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                        )}
                         {item.name}
                       </div>
                     </TableCell>
@@ -328,13 +351,16 @@ export default function ItemsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewItem(item)}>
                             <Eye className="mr-2 h-4 w-4" /> Detail
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEditItem(item)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteItem(item)}
+                          >
                             <Trash2 className="mr-2 h-4 w-4" /> Hapus
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -355,8 +381,27 @@ export default function ItemsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Forms and Dialogs */}
       <ItemForm open={isFormOpen} onOpenChange={setIsFormOpen} initialData={editingItem} onSubmit={handleFormSubmit} />
+
       <LogoutDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog} />
+
+      <DeleteConfirmation
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        itemName={itemToDelete?.name}
+      />
+
+      <ItemDetail
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        item={selectedItem}
+        onEdit={handleEditFromDetail}
+      />
+
+      <Toaster />
     </div>
   )
 }

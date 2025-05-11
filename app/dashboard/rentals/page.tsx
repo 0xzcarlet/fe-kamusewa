@@ -1,11 +1,8 @@
 "use client"
-
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
-  Package,
   Plus,
   Search,
   MoreHorizontal,
@@ -23,12 +20,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Import the RentalForm component
 import { useState } from "react"
 import { RentalForm } from "@/components/forms/rental-form"
+import { ResponsiveNavbar } from "@/components/responsive-navbar"
+import { Container } from "@/components/ui/container"
 
-// Replace the existing export default function with this updated version
 export default function RentalsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingRental, setEditingRental] = useState<any>(null)
@@ -127,187 +123,156 @@ export default function RentalsPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Package className="h-6 w-6" />
-          <span>KamuSewa</span>
-        </Link>
-        <nav className="hidden flex-1 items-center gap-6 md:flex">
-          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground">
-            Dashboard
-          </Link>
-          <Link href="/dashboard/categories" className="text-sm font-medium text-muted-foreground">
-            Kategori
-          </Link>
-          <Link href="/dashboard/items" className="text-sm font-medium text-muted-foreground">
-            Barang
-          </Link>
-          <Link href="/dashboard/customers" className="text-sm font-medium text-muted-foreground">
-            Pelanggan
-          </Link>
-          <Link href="/dashboard/rentals" className="text-sm font-medium">
-            Penyewaan
-          </Link>
-          <Link href="/dashboard/fines" className="text-sm font-medium text-muted-foreground">
-            Denda
-          </Link>
-        </nav>
-        <div className="ml-auto flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            Profil
-          </Button>
-          <Button variant="outline" size="sm">
-            Keluar
-          </Button>
-        </div>
-      </header>
+      <ResponsiveNavbar />
       <main className="flex-1 p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Manajemen Penyewaan</h1>
-            <p className="text-muted-foreground">Kelola semua transaksi penyewaan barang</p>
-          </div>
-          <Button className="gap-1" onClick={handleAddRental}>
-            <Plus className="h-4 w-4" /> Tambah Penyewaan
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              <CardTitle>Daftar Penyewaan</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="Cari penyewaan..." className="w-full bg-background pl-8" />
-                </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="active">Aktif</SelectItem>
-                    <SelectItem value="waiting">Menunggu Pengambilan</SelectItem>
-                    <SelectItem value="completed">Selesai</SelectItem>
-                    <SelectItem value="canceled">Dibatalkan</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Container>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Manajemen Penyewaan</h1>
+              <p className="text-muted-foreground">Kelola semua transaksi penyewaan barang</p>
             </div>
-            <CardDescription>Total {rentals.length} penyewaan tercatat</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Pelanggan</TableHead>
-                  <TableHead>Barang</TableHead>
-                  <TableHead>Periode</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rentals.map((rental) => (
-                  <TableRow key={rental.id}>
-                    <TableCell className="font-medium">{rental.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        {rental.customer}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {rental.items.map((item, index) => (
-                          <div key={index} className="flex items-center gap-1">
-                            <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm">{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">
-                            {rental.startDate} s/d {rental.endDate}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-sm">
-                            {Math.ceil(
-                              (new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) /
-                                (1000 * 60 * 60 * 24),
-                            )}{" "}
-                            hari
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">Rp {rental.totalAmount.toLocaleString("id-ID")}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          rental.status === "Aktif"
-                            ? "default"
-                            : rental.status === "Selesai"
-                              ? "success"
-                              : rental.status === "Dibatalkan"
-                                ? "destructive"
-                                : "secondary"
-                        }
-                      >
-                        {rental.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Aksi</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" /> Detail
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="mr-2 h-4 w-4" /> Cetak Invoice
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditRental(rental)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          {rental.status === "Aktif" && (
-                            <DropdownMenuItem>
-                              <CheckCircle className="mr-2 h-4 w-4" /> Tandai Selesai
-                            </DropdownMenuItem>
-                          )}
-                          {rental.status === "Menunggu Pengambilan" && (
-                            <DropdownMenuItem>
-                              <CheckCircle className="mr-2 h-4 w-4" /> Konfirmasi Pengambilan
-                            </DropdownMenuItem>
-                          )}
-                          {(rental.status === "Menunggu Pengambilan" || rental.status === "Aktif") && (
-                            <DropdownMenuItem className="text-destructive">
-                              <XCircle className="mr-2 h-4 w-4" /> Batalkan
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <Button className="gap-1" onClick={handleAddRental}>
+              <Plus className="h-4 w-4" /> Tambah Penyewaan
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <CardTitle>Daftar Penyewaan</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input type="search" placeholder="Cari penyewaan..." className="w-full bg-background pl-8" />
+                  </div>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="active">Aktif</SelectItem>
+                      <SelectItem value="waiting">Menunggu Pengambilan</SelectItem>
+                      <SelectItem value="completed">Selesai</SelectItem>
+                      <SelectItem value="canceled">Dibatalkan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <CardDescription>Total {rentals.length} penyewaan tercatat</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Pelanggan</TableHead>
+                    <TableHead>Barang</TableHead>
+                    <TableHead>Periode</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {rentals.map((rental) => (
+                    <TableRow key={rental.id}>
+                      <TableCell className="font-medium">{rental.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {rental.customer}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {rental.items.map((item, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-sm">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm">
+                              {rental.startDate} s/d {rental.endDate}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm">
+                              {Math.ceil(
+                                (new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) /
+                                  (1000 * 60 * 60 * 24),
+                              )}{" "}
+                              hari
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">Rp {rental.totalAmount.toLocaleString("id-ID")}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            rental.status === "Aktif"
+                              ? "default"
+                              : rental.status === "Selesai"
+                                ? "success"
+                                : rental.status === "Dibatalkan"
+                                  ? "destructive"
+                                  : "secondary"
+                          }
+                        >
+                          {rental.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Aksi</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" /> Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <FileText className="mr-2 h-4 w-4" /> Cetak Invoice
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditRental(rental)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            {rental.status === "Aktif" && (
+                              <DropdownMenuItem>
+                                <CheckCircle className="mr-2 h-4 w-4" /> Tandai Selesai
+                              </DropdownMenuItem>
+                            )}
+                            {rental.status === "Menunggu Pengambilan" && (
+                              <DropdownMenuItem>
+                                <CheckCircle className="mr-2 h-4 w-4" /> Konfirmasi Pengambilan
+                              </DropdownMenuItem>
+                            )}
+                            {(rental.status === "Menunggu Pengambilan" || rental.status === "Aktif") && (
+                              <DropdownMenuItem className="text-destructive">
+                                <XCircle className="mr-2 h-4 w-4" /> Batalkan
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </Container>
       </main>
       <RentalForm
         open={isFormOpen}

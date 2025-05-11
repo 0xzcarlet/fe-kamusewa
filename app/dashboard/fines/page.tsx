@@ -1,27 +1,16 @@
 "use client"
-
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  Package,
-  Plus,
-  Search,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Eye,
-  AlertCircle,
-  Calendar,
-  CheckCircle,
-} from "lucide-react"
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Calendar, CheckCircle } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
 import { FineForm } from "@/components/forms/fine-form"
+import { ResponsiveNavbar } from "@/components/responsive-navbar"
+import { Container } from "@/components/ui/container"
 
 export default function FinesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -129,147 +118,118 @@ export default function FinesPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Package className="h-6 w-6" />
-          <span>KamuSewa</span>
-        </Link>
-        <nav className="hidden flex-1 items-center gap-6 md:flex">
-          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground">
-            Dashboard
-          </Link>
-          <Link href="/dashboard/categories" className="text-sm font-medium text-muted-foreground">
-            Kategori
-          </Link>
-          <Link href="/dashboard/items" className="text-sm font-medium text-muted-foreground">
-            Barang
-          </Link>
-          <Link href="/dashboard/customers" className="text-sm font-medium text-muted-foreground">
-            Pelanggan
-          </Link>
-          <Link href="/dashboard/rentals" className="text-sm font-medium text-muted-foreground">
-            Penyewaan
-          </Link>
-          <Link href="/dashboard/fines" className="text-sm font-medium">
-            Denda
-          </Link>
-        </nav>
-        <div className="ml-auto flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            Profil
-          </Button>
-          <Button variant="outline" size="sm">
-            Keluar
-          </Button>
-        </div>
-      </header>
+      <ResponsiveNavbar />
       <main className="flex-1 p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Manajemen Denda</h1>
-            <p className="text-muted-foreground">Kelola denda untuk keterlambatan dan kerusakan</p>
-          </div>
-          <Button className="gap-1" onClick={handleAddFine}>
-            <Plus className="h-4 w-4" /> Tambah Denda
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              <CardTitle>Daftar Denda</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="Cari denda..." className="w-full bg-background pl-8" />
-                </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="unpaid">Belum Dibayar</SelectItem>
-                    <SelectItem value="paid">Sudah Dibayar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Container>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Manajemen Denda</h1>
+              <p className="text-muted-foreground">Kelola denda untuk keterlambatan dan kerusakan</p>
             </div>
-            <CardDescription>Total {fines.length} denda tercatat</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Pelanggan</TableHead>
-                  <TableHead>Barang</TableHead>
-                  <TableHead>Alasan</TableHead>
-                  <TableHead>Jumlah</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fines.map((fine) => (
-                  <TableRow key={fine.id}>
-                    <TableCell className="font-medium">{fine.id}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>{fine.customer}</span>
-                        <span className="text-xs text-muted-foreground">Penyewaan #{fine.rentalId}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{fine.item}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                        {fine.reason}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">Rp {fine.amount.toLocaleString("id-ID")}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                        {fine.date}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={fine.status === "Sudah Dibayar" ? "success" : "destructive"}>{fine.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Aksi</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" /> Detail
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditFine(fine)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          {fine.status === "Belum Dibayar" && (
-                            <DropdownMenuItem>
-                              <CheckCircle className="mr-2 h-4 w-4" /> Tandai Sudah Dibayar
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <Button className="gap-1" onClick={handleAddFine}>
+              <Plus className="h-4 w-4" /> Tambah Denda
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <CardTitle>Daftar Denda</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input type="search" placeholder="Cari denda..." className="w-full bg-background pl-8" />
+                  </div>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="unpaid">Belum Dibayar</SelectItem>
+                      <SelectItem value="paid">Sudah Dibayar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <CardDescription>Total {fines.length} denda tercatat</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Pelanggan</TableHead>
+                    <TableHead>Barang</TableHead>
+                    <TableHead>Alasan</TableHead>
+                    <TableHead>Jumlah</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {fines.map((fine) => (
+                    <TableRow key={fine.id}>
+                      <TableCell className="font-medium">{fine.id}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span>{fine.customer}</span>
+                          <span className="text-xs text-muted-foreground">Penyewaan #{fine.rentalId}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{fine.item}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                          {fine.reason}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">Rp {fine.amount.toLocaleString("id-ID")}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                          {fine.date}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={fine.status === "Sudah Dibayar" ? "success" : "destructive"}>
+                          {fine.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Aksi</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" /> Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditFine(fine)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            {fine.status === "Belum Dibayar" && (
+                              <DropdownMenuItem>
+                                <CheckCircle className="mr-2 h-4 w-4" /> Tandai Sudah Dibayar
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </Container>
       </main>
       <FineForm open={isFormOpen} onOpenChange={setIsFormOpen} initialData={editingFine} onSubmit={handleFormSubmit} />
     </div>

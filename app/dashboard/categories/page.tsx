@@ -1,14 +1,14 @@
 "use client"
-
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Package, FolderTree, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { FolderTree, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
 import { CategoryForm } from "@/components/forms/category-form"
+import { ResponsiveNavbar } from "@/components/responsive-navbar"
+import { Container } from "@/components/ui/container"
 
 export default function CategoriesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -44,109 +44,78 @@ export default function CategoriesPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Package className="h-6 w-6" />
-          <span>KamuSewa</span>
-        </Link>
-        <nav className="hidden flex-1 items-center gap-6 md:flex">
-          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground">
-            Dashboard
-          </Link>
-          <Link href="/dashboard/categories" className="text-sm font-medium">
-            Kategori
-          </Link>
-          <Link href="/dashboard/items" className="text-sm font-medium text-muted-foreground">
-            Barang
-          </Link>
-          <Link href="/dashboard/customers" className="text-sm font-medium text-muted-foreground">
-            Pelanggan
-          </Link>
-          <Link href="/dashboard/rentals" className="text-sm font-medium text-muted-foreground">
-            Penyewaan
-          </Link>
-          <Link href="/dashboard/fines" className="text-sm font-medium text-muted-foreground">
-            Denda
-          </Link>
-        </nav>
-        <div className="ml-auto flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            Profil
-          </Button>
-          <Button variant="outline" size="sm">
-            Keluar
-          </Button>
-        </div>
-      </header>
+      <ResponsiveNavbar />
       <main className="flex-1 p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Manajemen Kategori</h1>
-            <p className="text-muted-foreground">Kelola kategori barang yang tersedia untuk disewa</p>
-          </div>
-          <Button className="gap-1" onClick={handleAddCategory}>
-            <Plus className="h-4 w-4" /> Tambah Kategori
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle>Daftar Kategori</CardTitle>
-              <div className="relative w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input type="search" placeholder="Cari kategori..." className="w-full bg-background pl-8" />
-              </div>
+        <Container>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Manajemen Kategori</h1>
+              <p className="text-muted-foreground">Kelola kategori barang yang tersedia untuk disewa</p>
             </div>
-            <CardDescription>Total {categories.length} kategori tersedia</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nama Kategori</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead>Jumlah Barang</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell className="font-medium">{category.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FolderTree className="h-4 w-4 text-muted-foreground" />
-                        {category.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>{category.description}</TableCell>
-                    <TableCell>{category.itemCount} barang</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Aksi</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <Button className="gap-1" onClick={handleAddCategory}>
+              <Plus className="h-4 w-4" /> Tambah Kategori
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <CardTitle>Daftar Kategori</CardTitle>
+                <div className="relative w-64">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input type="search" placeholder="Cari kategori..." className="w-full bg-background pl-8" />
+                </div>
+              </div>
+              <CardDescription>Total {categories.length} kategori tersedia</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Nama Kategori</TableHead>
+                    <TableHead>Deskripsi</TableHead>
+                    <TableHead>Jumlah Barang</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {categories.map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell className="font-medium">{category.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FolderTree className="h-4 w-4 text-muted-foreground" />
+                          {category.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>{category.description}</TableCell>
+                      <TableCell>{category.itemCount} barang</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Aksi</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </Container>
       </main>
       <CategoryForm
         open={isFormOpen}

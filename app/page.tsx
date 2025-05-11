@@ -1,33 +1,36 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle, Package, Search, ShieldCheck } from "lucide-react"
+import { Container } from "@/components/ui/container"
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
-        <Link href="/" className="flex items-center justify-center">
-          <Package className="h-6 w-6 mr-2" />
-          <span className="font-bold text-xl">KamuSewa</span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
-            Fitur
+      <header className="h-16 flex items-center border-b">
+        <Container className="flex w-full items-center">
+          <Link href="/" className="flex items-center justify-center">
+            <Package className="h-6 w-6 mr-2" />
+            <span className="font-bold text-xl">KamuSewa</span>
           </Link>
-          <Link href="#about" className="text-sm font-medium hover:underline underline-offset-4">
-            Tentang Kami
-          </Link>
-          <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
-            Masuk
-          </Link>
-          <Link href="/register" className="text-sm font-medium hover:underline underline-offset-4">
-            Daftar
-          </Link>
-        </nav>
+          <nav className="ml-auto flex gap-4 sm:gap-6">
+            <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
+              Fitur
+            </Link>
+            <Link href="#about" className="text-sm font-medium hover:underline underline-offset-4">
+              Tentang Kami
+            </Link>
+            <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
+              Masuk
+            </Link>
+            <Link href="/register" className="text-sm font-medium hover:underline underline-offset-4">
+              Daftar
+            </Link>
+          </nav>
+        </Container>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-          <div className="container px-4 md:px-6">
+          <Container>
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
@@ -62,10 +65,10 @@ export default function LandingPage() {
                 />
               </div>
             </div>
-          </div>
+          </Container>
         </section>
         <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6">
+          <Container>
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
@@ -114,11 +117,11 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Container>
         </section>
         <section id="about" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-10 px-10 md:gap-16 lg:grid-cols-2">
+          <Container>
+            <div className="grid gap-10 md:gap-16 lg:grid-cols-2">
               <div className="space-y-4">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Tentang KamuSewa</div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
@@ -153,46 +156,50 @@ export default function LandingPage() {
                 />
               </div>
             </div>
-          </div>
+          </Container>
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container grid items-center gap-6 px-4 md:px-6 lg:grid-cols-2 lg:gap-10">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                Siap untuk Meningkatkan Bisnis Penyewaan Anda?
-              </h2>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Daftar sekarang dan nikmati kemudahan mengelola bisnis penyewaan dengan KamuSewa.
-              </p>
+          <Container>
+            <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                  Siap untuk Meningkatkan Bisnis Penyewaan Anda?
+                </h2>
+                <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Daftar sekarang dan nikmati kemudahan mengelola bisnis penyewaan dengan KamuSewa.
+                </p>
+              </div>
+              <div className="flex gap-4 lg:justify-end">
+                <Link href="/register">
+                  <Button size="lg" className="gap-1.5">
+                    Daftar Sekarang
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button size="lg" variant="outline">
+                    Masuk
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <div className="flex gap-4 lg:justify-end">
-              <Link href="/register">
-                <Button size="lg" className="gap-1.5">
-                  Daftar Sekarang
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline">
-                  Masuk
-                </Button>
-              </Link>
-            </div>
-          </div>
+          </Container>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} KamuSewa. Hak Cipta Dilindungi.
-        </p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="#" className="text-xs hover:underline underline-offset-4">
-            Syarat & Ketentuan
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4">
-            Kebijakan Privasi
-          </Link>
-        </nav>
+      <footer className="py-6 w-full shrink-0 border-t">
+        <Container className="flex flex-col sm:flex-row items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} KamuSewa. Hak Cipta Dilindungi.
+          </p>
+          <nav className="sm:ml-auto flex gap-4 sm:gap-6 mt-4 sm:mt-0">
+            <Link href="#" className="text-xs hover:underline underline-offset-4">
+              Syarat & Ketentuan
+            </Link>
+            <Link href="#" className="text-xs hover:underline underline-offset-4">
+              Kebijakan Privasi
+            </Link>
+          </nav>
+        </Container>
       </footer>
     </div>
   )

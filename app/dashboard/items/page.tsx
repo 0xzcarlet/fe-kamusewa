@@ -18,6 +18,7 @@ import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { ItemDetail } from "@/components/item-detail"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { Container } from "@/components/ui/container"
 
 export default function ItemsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -34,7 +35,7 @@ export default function ItemsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
 
-  // Sample data for items with images
+  // Sample data for items with placeholder images
   const [items, setItems] = useState([
     {
       id: 1,
@@ -44,7 +45,7 @@ export default function ItemsPage() {
       stock: 5,
       status: "Tersedia",
       description: "Kamera mirrorless full-frame dengan kualitas gambar yang sangat baik",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 2,
@@ -54,7 +55,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Tersedia",
       description: "Sound system lengkap dengan speaker, mixer, dan mikrofon",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 3,
@@ -64,7 +65,7 @@ export default function ItemsPage() {
       stock: 4,
       status: "Tersedia",
       description: "Proyektor HD dengan brightness tinggi",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 4,
@@ -74,7 +75,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Disewa",
       description: "Laptop MacBook Pro 16 inch dengan spesifikasi tinggi",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 5,
@@ -84,7 +85,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Drone dengan kamera 4K dan stabilisasi gambar",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 6,
@@ -94,7 +95,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Disewa",
       description: "Lensa zoom standar dengan aperture f/2.8",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 7,
@@ -104,7 +105,7 @@ export default function ItemsPage() {
       stock: 8,
       status: "Tersedia",
       description: "Tripod profesional dengan kepala fluid untuk video",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 8,
@@ -114,7 +115,7 @@ export default function ItemsPage() {
       stock: 6,
       status: "Tersedia",
       description: "Panel lampu LED dengan temperatur warna yang dapat diatur",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 9,
@@ -124,7 +125,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Kamera mirrorless full-frame dengan kemampuan video 8K",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 10,
@@ -134,7 +135,7 @@ export default function ItemsPage() {
       stock: 4,
       status: "Tersedia",
       description: "Mikrofon shotgun untuk video dan film",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 11,
@@ -144,7 +145,7 @@ export default function ItemsPage() {
       stock: 3,
       status: "Disewa",
       description: "Proyektor 4K untuk home theater",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
     {
       id: 12,
@@ -154,7 +155,7 @@ export default function ItemsPage() {
       stock: 2,
       status: "Tersedia",
       description: "Laptop premium dengan layar 4K",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/placeholder.svg?height=100&width=100",
     },
   ])
 
@@ -257,129 +258,131 @@ export default function ItemsPage() {
     <div className="flex min-h-screen flex-col">
       <ResponsiveNavbar />
       <main className="flex-1 p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Manajemen Barang</h1>
-            <p className="text-muted-foreground">Kelola barang yang tersedia untuk disewa</p>
-          </div>
-          <Button className="gap-1" onClick={handleAddItem}>
-            <Plus className="h-4 w-4" /> Tambah Barang
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              <CardTitle>Daftar Barang</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Cari barang..."
-                    className="w-full bg-background pl-8"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                  />
-                </div>
-                <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter Kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Kategori</SelectItem>
-                    <SelectItem value="Kamera">Kamera & Fotografi</SelectItem>
-                    <SelectItem value="Audio">Audio & Sound System</SelectItem>
-                    <SelectItem value="Proyektor">Proyektor & Display</SelectItem>
-                    <SelectItem value="Komputer">Komputer & Laptop</SelectItem>
-                    <SelectItem value="Drone">Drone & Peralatan Aerial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Container>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Manajemen Barang</h1>
+              <p className="text-muted-foreground">Kelola barang yang tersedia untuk disewa</p>
             </div>
-            <CardDescription>Total {totalItems} barang tersedia</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nama Barang</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Harga Sewa/Hari</TableHead>
-                  <TableHead>Stok</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {item.image ? (
-                          <div className="h-8 w-8 rounded-md overflow-hidden">
-                            <img
-                              src={item.image || "/placeholder.svg"}
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        {item.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        {item.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
-                    <TableCell>{item.stock} unit</TableCell>
-                    <TableCell>
-                      <Badge variant={item.status === "Tersedia" ? "success" : "secondary"}>{item.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Aksi</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewItem(item)}>
-                            <Eye className="mr-2 h-4 w-4" /> Detail
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteItem(item)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <Button className="gap-1" onClick={handleAddItem}>
+              <Plus className="h-4 w-4" /> Tambah Barang
+            </Button>
+          </div>
 
-            <TablePagination
-              totalItems={totalItems}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-            />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <CardTitle>Daftar Barang</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Cari barang..."
+                      className="w-full bg-background pl-8"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                    />
+                  </div>
+                  <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter Kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Kategori</SelectItem>
+                      <SelectItem value="Kamera">Kamera & Fotografi</SelectItem>
+                      <SelectItem value="Audio">Audio & Sound System</SelectItem>
+                      <SelectItem value="Proyektor">Proyektor & Display</SelectItem>
+                      <SelectItem value="Komputer">Komputer & Laptop</SelectItem>
+                      <SelectItem value="Drone">Drone & Peralatan Aerial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <CardDescription>Total {totalItems} barang tersedia</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Nama Barang</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Harga Sewa/Hari</TableHead>
+                    <TableHead>Stok</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {item.image ? (
+                            <div className="h-8 w-8 rounded-md overflow-hidden">
+                              <img
+                                src={item.image || "/placeholder.svg"}
+                                alt={item.name}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {item.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal">
+                          {item.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
+                      <TableCell>{item.stock} unit</TableCell>
+                      <TableCell>
+                        <Badge variant={item.status === "Tersedia" ? "success" : "secondary"}>{item.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Aksi</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewItem(item)}>
+                              <Eye className="mr-2 h-4 w-4" /> Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDeleteItem(item)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <TablePagination
+                totalItems={totalItems}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </CardContent>
+          </Card>
+        </Container>
       </main>
 
       {/* Forms and Dialogs */}

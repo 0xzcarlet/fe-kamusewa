@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -40,20 +40,49 @@ interface RentalFormProps {
 
 export function RentalForm({ open, onOpenChange, initialData, onSubmit }: RentalFormProps) {
   const [formData, setFormData] = useState({
-    customer: initialData?.customer || "",
-    items: initialData?.items || [],
-    startDate: initialData?.startDate || format(new Date(), "yyyy-MM-dd"),
-    endDate: initialData?.endDate || format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
-    totalAmount: initialData?.totalAmount || 0,
-    status: initialData?.status || "Menunggu Pengambilan",
+    customer: "",
+    items: [] as string[],
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+    totalAmount: 0,
+    status: "Menunggu Pengambilan",
   })
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    initialData?.startDate ? new Date(initialData.startDate) : new Date(),
-  )
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    initialData?.endDate ? new Date(initialData.endDate) : new Date(Date.now() + 86400000),
-  )
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date())
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 86400000))
   const [isLoading, setIsLoading] = useState(false)
+
+  // Reset form data when initialData changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          customer: initialData.customer || "",
+          items: initialData.items || [],
+          startDate: initialData.startDate || format(new Date(), "yyyy-MM-dd"),
+          endDate: initialData.endDate || format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+          totalAmount: initialData.totalAmount || 0,
+          status: initialData.status || "Menunggu Pengambilan",
+        })
+        setStartDate(initialData.startDate ? new Date(initialData.startDate) : new Date())
+        setEndDate(initialData.endDate ? new Date(initialData.endDate) : new Date(Date.now() + 86400000))
+      } else {
+        // Reset form for new rental
+        setFormData({
+          customer: "",
+          items: [],
+          startDate: format(new Date(), "yyyy-MM-dd"),
+          endDate: format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+          totalAmount: 0,
+          status: "Menunggu Pengambilan",
+        })
+        setStartDate(new Date())
+        setEndDate(new Date(Date.now() + 86400000))
+      }
+    }
+  }, [initialData, open])
+
+  // Return null when not open to ensure proper cleanup
+  if (!open) return null
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -104,7 +133,6 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
         ...formData,
         id: initialData?.id,
       })
-      onOpenChange(false)
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {

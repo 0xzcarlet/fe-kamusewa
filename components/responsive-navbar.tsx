@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Package, Menu, User, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LogoutDialog } from "@/components/logout-dialog"
 import { Container } from "@/components/ui/container"
+import { useDialog } from "@/components/dialog-context"
 
 interface NavItem {
   href: string
@@ -16,7 +16,7 @@ interface NavItem {
 }
 
 export function ResponsiveNavbar() {
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const { openDialog } = useDialog()
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -28,6 +28,11 @@ export function ResponsiveNavbar() {
     { href: "/dashboard/rentals", label: "Penyewaan" },
     { href: "/dashboard/fines", label: "Denda" },
   ]
+
+  const handleLogout = () => {
+    setOpen(false)
+    openDialog("logout")
+  }
 
   return (
     <>
@@ -93,15 +98,7 @@ export function ResponsiveNavbar() {
                           Profil
                         </Link>
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          setOpen(false)
-                          setShowLogoutDialog(true)
-                        }}
-                      >
+                      <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
                         <LogOut className="h-4 w-4 mr-2" />
                         Keluar
                       </Button>
@@ -119,14 +116,13 @@ export function ResponsiveNavbar() {
                 Profil
               </Link>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowLogoutDialog(true)}>
+            <Button variant="outline" size="sm" onClick={() => openDialog("logout")}>
               <LogOut className="h-4 w-4 mr-2" />
               Keluar
             </Button>
           </div>
         </Container>
       </header>
-      <LogoutDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog} />
     </>
   )
 }

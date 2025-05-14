@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -33,13 +33,40 @@ interface CustomerFormProps {
 
 export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: CustomerFormProps) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    email: initialData?.email || "",
-    phone: initialData?.phone || "",
-    address: initialData?.address || "",
-    status: initialData?.status || "Aktif",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    status: "Aktif",
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  // Reset form data when initialData changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          name: initialData.name || "",
+          email: initialData.email || "",
+          phone: initialData.phone || "",
+          address: initialData.address || "",
+          status: initialData.status || "Aktif",
+        })
+      } else {
+        // Reset form for new customer
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          address: "",
+          status: "Aktif",
+        })
+      }
+    }
+  }, [initialData, open])
+
+  // Return null when not open to ensure proper cleanup
+  if (!open) return null
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -61,7 +88,6 @@ export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: Cust
         ...formData,
         id: initialData?.id,
       })
-      onOpenChange(false)
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {

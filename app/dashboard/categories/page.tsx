@@ -5,42 +5,117 @@ import { Input } from "@/components/ui/input"
 import { FolderTree, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CategoryForm } from "@/components/forms/category-form"
 import { ResponsiveNavbar } from "@/components/responsive-navbar"
 import { Container } from "@/components/ui/container"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { useDialog } from "@/components/dialog-context"
+import { DeleteConfirmation } from "@/components/delete-confirmation"
+
+interface Category {
+  id: number
+  name: string
+  description: string
+  created_at: string
+  updated_at: string
+}
 
 export default function CategoriesPage() {
+  const { openDialog, setDialogData } = useDialog()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
 
-  // Sample data for categories
-  const categories = [
-    { id: 1, name: "Kamera & Fotografi", description: "Peralatan fotografi dan videografi", itemCount: 25 },
-    { id: 2, name: "Audio & Sound System", description: "Peralatan audio dan sound system", itemCount: 18 },
-    { id: 3, name: "Proyektor & Display", description: "Peralatan proyeksi dan display", itemCount: 12 },
-    { id: 4, name: "Komputer & Laptop", description: "Perangkat komputer dan laptop", itemCount: 15 },
-    { id: 5, name: "Drone & Peralatan Aerial", description: "Drone dan peralatan aerial", itemCount: 8 },
-    { id: 6, name: "Lighting", description: "Peralatan pencahayaan", itemCount: 20 },
-    { id: 7, name: "Tripod & Stabilizer", description: "Tripod, monopod, dan stabilizer", itemCount: 14 },
-    { id: 8, name: "Lensa Kamera", description: "Berbagai jenis lensa kamera", itemCount: 30 },
-  ]
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch("/api/categories")
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories")
+      }
+      const data = await response.json()
+      setCategories(data)
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+      toast({
+        title: "Error",
+        description: "Gagal memuat data kategori",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleAddCategory = () => {
     setEditingCategory(null)
     setIsFormOpen(true)
   }
 
-  const handleEditCategory = (category: any) => {
+  const handleEditCategory = (category: Category) => {
     setEditingCategory(category)
     setIsFormOpen(true)
   }
 
-  const handleFormSubmit = (data: any) => {
-    console.log("Form submitted:", data)
-    // Here you would typically save the data to your backend
+  const handleDeleteCategory = (category: Category) => {
+    setDialogData({
+      itemName: category.name,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/categories/${category.id}`, {
+            method: "DELETE",
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to delete category")
+          }
+
+          // Remove the category from the state
+          setCategories((prev) => prev.filter((c) => c.id !== category.id))
+
+          toast({
+            title: "Kategori berhasil dihapus",
+            description: `Kategori ${category.name} telah dihapus.`,
+          })
+        } catch (error) {
+          console.error("Error deleting category:", error)
+          toast({
+            title: "Error",
+            description: "Gagal menghapus kategori",
+            variant: "destructive",
+          })
+        }
+      },
+    })
+    openDialog("delete-confirmation")
+  }
+
+  const handleFormSubmit = (data: Category) => {
+    if (editingCategory) {
+      // Update existing category in the state
+      setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c)))
+    } else {
+      // Add new category to the state
+      setCategories((prev) => [...prev, data])
+    }
     setIsFormOpen(false)
   }
+
+  // Filter categories based on search query
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase())),
+  )
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -63,56 +138,77 @@ export default function CategoriesPage() {
                 <CardTitle>Daftar Kategori</CardTitle>
                 <div className="relative w-64">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="Cari kategori..." className="w-full bg-background pl-8" />
+                  <Input
+                    type="search"
+                    placeholder="Cari kategori..."
+                    className="w-full bg-background pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
               </div>
-              <CardDescription>Total {categories.length} kategori tersedia</CardDescription>
+              <CardDescription>Total {filteredCategories.length} kategori tersedia</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Nama Kategori</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Jumlah Barang</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.id}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FolderTree className="h-4 w-4 text-muted-foreground" />
-                          {category.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>{category.description}</TableCell>
-                      <TableCell>{category.itemCount} barang</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Aksi</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <p>Memuat data...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Nama Kategori</TableHead>
+                      <TableHead>Deskripsi</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCategories.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8">
+                          {searchQuery ? "Tidak ada kategori yang sesuai dengan pencarian" : "Belum ada kategori"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredCategories.map((category) => (
+                        <TableRow key={category.id}>
+                          <TableCell className="font-medium">{category.id}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FolderTree className="h-4 w-4 text-muted-foreground" />
+                              {category.name}
+                            </div>
+                          </TableCell>
+                          <TableCell>{category.description || "-"}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Aksi</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteCategory(category)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </Container>
@@ -120,9 +216,11 @@ export default function CategoriesPage() {
       <CategoryForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        initialData={editingCategory}
+        initialData={editingCategory || undefined}
         onSubmit={handleFormSubmit}
       />
+      <DeleteConfirmation />
+      <Toaster />
     </div>
   )
 }

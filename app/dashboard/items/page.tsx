@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,223 +10,163 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ItemForm } from "@/components/forms/item-form"
 import { TablePagination } from "@/components/table-pagination"
-import { LogoutDialog } from "@/components/logout-dialog"
 import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
-import { ItemDetail } from "@/components/item-detail"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Container } from "@/components/ui/container"
+import { DialogProvider, useDialog } from "@/components/dialog-context"
+import { ItemDetail } from "@/components/item-detail"
+import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { LogoutDialog } from "@/components/logout-dialog"
+import { ItemForm } from "@/components/forms/item-form"
 
-export default function ItemsPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<any>(null)
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<any>(null)
-  const [showDetailDialog, setShowDetailDialog] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+interface Category {
+  id: number
+  name: string
+}
+
+interface Item {
+  id: number
+  name: string
+  category: string
+  category_id: number
+  price: number
+  stock: number
+  status: string
+  description: string
+  image_url: string
+}
+
+// Wrap the main content with the dialog provider
+function ItemsPageContent() {
+  const { openDialog, setDialogData } = useDialog()
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [categories, setCategories] = useState<Category[]>([])
 
-  // Sample data for items with placeholder images
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      name: "Kamera Sony A7III",
-      category: "Kamera & Fotografi",
-      price: 250000,
-      stock: 5,
-      status: "Tersedia",
-      description: "Kamera mirrorless full-frame dengan kualitas gambar yang sangat baik",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 2,
-      name: "Sound System 500W",
-      category: "Audio & Sound System",
-      price: 500000,
-      stock: 3,
-      status: "Tersedia",
-      description: "Sound system lengkap dengan speaker, mixer, dan mikrofon",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 3,
-      name: "Proyektor Epson",
-      category: "Proyektor & Display",
-      price: 200000,
-      stock: 4,
-      status: "Tersedia",
-      description: "Proyektor HD dengan brightness tinggi",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 4,
-      name: "Laptop MacBook Pro",
-      category: "Komputer & Laptop",
-      price: 350000,
-      stock: 2,
-      status: "Disewa",
-      description: "Laptop MacBook Pro 16 inch dengan spesifikasi tinggi",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 5,
-      name: "Drone DJI Mavic",
-      category: "Drone & Peralatan Aerial",
-      price: 450000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Drone dengan kamera 4K dan stabilisasi gambar",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 6,
-      name: "Lensa Canon 24-70mm",
-      category: "Lensa Kamera",
-      price: 150000,
-      stock: 3,
-      status: "Disewa",
-      description: "Lensa zoom standar dengan aperture f/2.8",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 7,
-      name: "Tripod Manfrotto",
-      category: "Tripod & Stabilizer",
-      price: 75000,
-      stock: 8,
-      status: "Tersedia",
-      description: "Tripod profesional dengan kepala fluid untuk video",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 8,
-      name: "LED Light Panel",
-      category: "Lighting",
-      price: 100000,
-      stock: 6,
-      status: "Tersedia",
-      description: "Panel lampu LED dengan temperatur warna yang dapat diatur",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 9,
-      name: "Kamera Canon EOS R5",
-      category: "Kamera & Fotografi",
-      price: 350000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Kamera mirrorless full-frame dengan kemampuan video 8K",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 10,
-      name: "Microphone Rode NTG",
-      category: "Audio & Sound System",
-      price: 120000,
-      stock: 4,
-      status: "Tersedia",
-      description: "Mikrofon shotgun untuk video dan film",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 11,
-      name: "Proyektor BenQ",
-      category: "Proyektor & Display",
-      price: 180000,
-      stock: 3,
-      status: "Disewa",
-      description: "Proyektor 4K untuk home theater",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-    {
-      id: 12,
-      name: "Laptop Dell XPS",
-      category: "Komputer & Laptop",
-      price: 300000,
-      stock: 2,
-      status: "Tersedia",
-      description: "Laptop premium dengan layar 4K",
-      image: "/placeholder.svg?height=100&width=100",
-    },
-  ])
+  // Data state
+  const [items, setItems] = useState<Item[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [totalItems, setTotalItems] = useState(0)
 
-  // Filter and paginate items
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory =
-      categoryFilter === "all" || item.category.toLowerCase().includes(categoryFilter.toLowerCase())
-    return matchesSearch && matchesCategory
-  })
+  // Fetch items and categories on component mount
+  useEffect(() => {
+    fetchCategories()
+    fetchItems()
+  }, [])
 
-  const totalItems = filteredItems.length
-  const paginatedItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  // Fetch items when search or filter changes
+  useEffect(() => {
+    fetchItems()
+  }, [searchQuery, categoryFilter])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories")
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories")
+      }
+      const data = await response.json()
+      setCategories(data)
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+      toast({
+        title: "Error",
+        description: "Gagal memuat data kategori",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const fetchItems = async () => {
+    setIsLoading(true)
+    try {
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (searchQuery) params.append("search", searchQuery)
+      if (categoryFilter !== "all") params.append("category", categoryFilter)
+
+      const response = await fetch(`/api/items?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch items")
+      }
+      const data = await response.json()
+      setItems(data)
+      setTotalItems(data.length)
+    } catch (error) {
+      console.error("Error fetching items:", error)
+      toast({
+        title: "Error",
+        description: "Gagal memuat data barang",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleAddItem = () => {
-    setEditingItem(null)
-    setIsFormOpen(true)
+    setDialogData({
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("item-form")
   }
 
-  const handleEditItem = (item: any) => {
-    setEditingItem(item)
-    setIsFormOpen(true)
+  const handleEditItem = (item: Item) => {
+    setDialogData({
+      ...item,
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("item-form")
   }
 
-  const handleViewItem = (item: any) => {
-    setSelectedItem(item)
-    setShowDetailDialog(true)
+  const handleViewItem = (item: Item) => {
+    setDialogData(item)
+    openDialog("item-detail")
   }
 
-  const handleDeleteItem = (item: any) => {
-    setItemToDelete(item)
-    setShowDeleteDialog(true)
+  const handleDeleteItem = (item: Item) => {
+    setDialogData({
+      itemName: item.name,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/items/${item.id}`, {
+            method: "DELETE",
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to delete item")
+          }
+
+          // Remove the item from the state
+          setItems((prevItems) => prevItems.filter((i) => i.id !== item.id))
+          setTotalItems((prev) => prev - 1)
+
+          toast({
+            title: "Barang berhasil dihapus",
+            description: `${item.name} telah dihapus dari daftar barang.`,
+          })
+        } catch (error) {
+          console.error("Error deleting item:", error)
+          toast({
+            title: "Error",
+            description: "Gagal menghapus barang",
+            variant: "destructive",
+          })
+        }
+      },
+    })
+    openDialog("delete-confirmation")
   }
 
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      // In a real app, you would call an API to delete the item
-      setItems((prevItems) => prevItems.filter((item) => item.id !== itemToDelete.id))
-      toast({
-        title: "Barang berhasil dihapus",
-        description: `${itemToDelete.name} telah dihapus dari daftar barang.`,
-      })
-      setShowDeleteDialog(false)
-      setItemToDelete(null)
-    }
-  }
-
-  const handleFormSubmit = (data: any) => {
-    // In a real app, you would call an API to save the data
-    if (data.id) {
-      // Update existing item
-      setItems((prevItems) => prevItems.map((item) => (item.id === data.id ? { ...item, ...data } : item)))
-      toast({
-        title: "Barang berhasil diperbarui",
-        description: `Perubahan pada ${data.name} telah disimpan.`,
-      })
-    } else {
-      // Add new item
-      const newItem = {
-        ...data,
-        id: items.length > 0 ? Math.max(...items.map((item) => item.id)) + 1 : 1,
-      }
-      setItems((prevItems) => [...prevItems, newItem])
-      toast({
-        title: "Barang berhasil ditambahkan",
-        description: `${data.name} telah ditambahkan ke daftar barang.`,
-      })
-    }
-    setIsFormOpen(false)
+  const handleFormSubmit = async (data: any) => {
+    // Refresh the items list after form submission
+    fetchItems()
   }
 
   const handlePageChange = (page: number) => {
@@ -248,11 +188,8 @@ export default function ItemsPage() {
     setCurrentPage(1) // Reset to first page when filtering
   }
 
-  const handleEditFromDetail = () => {
-    setEditingItem(selectedItem)
-    setShowDetailDialog(false)
-    setIsFormOpen(true)
-  }
+  // Paginate items
+  const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -290,11 +227,11 @@ export default function ItemsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua Kategori</SelectItem>
-                      <SelectItem value="Kamera">Kamera & Fotografi</SelectItem>
-                      <SelectItem value="Audio">Audio & Sound System</SelectItem>
-                      <SelectItem value="Proyektor">Proyektor & Display</SelectItem>
-                      <SelectItem value="Komputer">Komputer & Laptop</SelectItem>
-                      <SelectItem value="Drone">Drone & Peralatan Aerial</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -302,76 +239,92 @@ export default function ItemsPage() {
               <CardDescription>Total {totalItems} barang tersedia</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Harga Sewa/Hari</TableHead>
-                    <TableHead>Stok</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.id}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {item.image ? (
-                            <div className="h-8 w-8 rounded-md overflow-hidden">
-                              <img
-                                src={item.image || "/placeholder.svg"}
-                                alt={item.name}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          {item.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-normal">
-                          {item.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
-                      <TableCell>{item.stock} unit</TableCell>
-                      <TableCell>
-                        <Badge variant={item.status === "Tersedia" ? "success" : "secondary"}>{item.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Aksi</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewItem(item)}>
-                              <Eye className="mr-2 h-4 w-4" /> Detail
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteItem(item)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <p>Memuat data...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Harga Sewa/Hari</TableHead>
+                      <TableHead>Stok</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8">
+                          {searchQuery || categoryFilter !== "all"
+                            ? "Tidak ada barang yang sesuai dengan pencarian"
+                            : "Belum ada barang"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.id}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {item.image_url ? (
+                                <div className="h-8 w-8 rounded-md overflow-hidden">
+                                  <img
+                                    src={item.image_url || "/placeholder.svg"}
+                                    alt={item.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              {item.name}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-normal">
+                              {item.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
+                          <TableCell>{item.stock} unit</TableCell>
+                          <TableCell>
+                            <Badge variant={item.status === "Tersedia" ? "success" : "secondary"}>{item.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Aksi</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleViewItem(item)}>
+                                  <Eye className="mr-2 h-4 w-4" /> Detail
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                  <Pencil className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteItem(item)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
 
               <TablePagination
                 totalItems={totalItems}
@@ -385,26 +338,22 @@ export default function ItemsPage() {
         </Container>
       </main>
 
-      {/* Forms and Dialogs */}
-      <ItemForm open={isFormOpen} onOpenChange={setIsFormOpen} initialData={editingItem} onSubmit={handleFormSubmit} />
-
-      <LogoutDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog} />
-
-      <DeleteConfirmation
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={confirmDelete}
-        itemName={itemToDelete?.name}
-      />
-
-      <ItemDetail
-        open={showDetailDialog}
-        onOpenChange={setShowDetailDialog}
-        item={selectedItem}
-        onEdit={handleEditFromDetail}
-      />
+      {/* Render all dialogs */}
+      <ItemDetail />
+      <DeleteConfirmation />
+      <LogoutDialog />
+      <ItemForm />
 
       <Toaster />
     </div>
+  )
+}
+
+// Wrap the page with the dialog provider
+export default function ItemsPage() {
+  return (
+    <DialogProvider>
+      <ItemsPageContent />
+    </DialogProvider>
   )
 }

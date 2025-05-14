@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,16 +41,49 @@ interface FineFormProps {
 
 export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineFormProps) {
   const [formData, setFormData] = useState({
-    rentalId: initialData?.rentalId || 0,
-    customer: initialData?.customer || "",
-    item: initialData?.item || "",
-    amount: initialData?.amount || 0,
-    reason: initialData?.reason || "",
-    date: initialData?.date || format(new Date(), "yyyy-MM-dd"),
-    status: initialData?.status || "Belum Dibayar",
+    rentalId: 0,
+    customer: "",
+    item: "",
+    amount: 0,
+    reason: "",
+    date: format(new Date(), "yyyy-MM-dd"),
+    status: "Belum Dibayar",
   })
-  const [date, setDate] = useState<Date | undefined>(initialData?.date ? new Date(initialData.date) : new Date())
+  const [date, setDate] = useState<Date | undefined>(new Date())
   const [isLoading, setIsLoading] = useState(false)
+
+  // Reset form data when initialData changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          rentalId: initialData.rentalId || 0,
+          customer: initialData.customer || "",
+          item: initialData.item || "",
+          amount: initialData.amount || 0,
+          reason: initialData.reason || "",
+          date: initialData.date || format(new Date(), "yyyy-MM-dd"),
+          status: initialData.status || "Belum Dibayar",
+        })
+        setDate(initialData.date ? new Date(initialData.date) : new Date())
+      } else {
+        // Reset form for new fine
+        setFormData({
+          rentalId: 0,
+          customer: "",
+          item: "",
+          amount: 0,
+          reason: "",
+          date: format(new Date(), "yyyy-MM-dd"),
+          status: "Belum Dibayar",
+        })
+        setDate(new Date())
+      }
+    }
+  }, [initialData, open])
+
+  // Return null when not open to ensure proper cleanup
+  if (!open) return null
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -87,7 +120,6 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
         ...formData,
         id: initialData?.id,
       })
-      onOpenChange(false)
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {

@@ -1,49 +1,39 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { LogOut } from "lucide-react"
+import { CustomDialog } from "@/components/custom-dialog"
+import { Button } from "@/components/ui/button"
+import { useDialog } from "@/components/dialog-context"
 
-interface LogoutDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
-
-export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
+export function LogoutDialog() {
   const router = useRouter()
+  const { activeDialog, closeDialog } = useDialog()
+  const isOpen = activeDialog === "logout"
+
+  if (!isOpen) return null
 
   const handleLogout = () => {
+    closeDialog()
     // In a real app, you would call your logout API here
     // For now, we'll just redirect to the login page
-    router.push("/login")
+    setTimeout(() => {
+      router.push("/login")
+    }, 300)
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" />
-            Konfirmasi Keluar
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            Apakah Anda yakin ingin keluar dari aplikasi? Semua sesi Anda akan berakhir.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Batal</AlertDialogCancel>
-          <AlertDialogAction onClick={handleLogout}>Keluar</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <CustomDialog
+      open={isOpen}
+      onClose={closeDialog}
+      title="Konfirmasi Keluar"
+      description="Apakah Anda yakin ingin keluar dari aplikasi? Semua sesi Anda akan berakhir."
+    >
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={closeDialog}>
+          Batal
+        </Button>
+        <Button onClick={handleLogout}>Keluar</Button>
+      </div>
+    </CustomDialog>
   )
 }

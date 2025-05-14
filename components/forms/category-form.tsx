@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/components/ui/use-toast"
 
 interface CategoryFormProps {
   open: boolean
@@ -29,10 +30,31 @@ interface CategoryFormProps {
 
 export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: CategoryFormProps) {
   const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    description: initialData?.description || "",
+    name: "",
+    description: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  // Reset form data when initialData changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          name: initialData.name || "",
+          description: initialData.description || "",
+        })
+      } else {
+        // Reset form for new category
+        setFormData({
+          name: "",
+          description: "",
+        })
+      }
+    }
+  }, [initialData, open])
+
+  // Return null when not open to ensure proper cleanup
+  if (!open) return null
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -44,15 +66,56 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      onSubmit({
-        ...formData,
-        id: initialData?.id,
-      })
-      onOpenChange(false)
+      if (initialData?.id) {
+        // Update existing category
+        const response = await fetch(`/api/categories/${initialData.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || "Failed to update category")
+        }
+
+        const updatedCategory = await response.json()
+        toast({
+          title: "Kategori berhasil diperbarui",
+          description: `Kategori ${updatedCategory.name} telah diperbarui.`,
+        })
+        onSubmit(updatedCategory)
+      } else {
+        // Create new category
+        const response = await fetch("/api/categories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || "Failed to create category")
+        }
+
+        const newCategory = await response.json()
+        toast({
+          title: "Kategori berhasil ditambahkan",
+          description: `Kategori ${newCategory.name} telah ditambahkan.`,
+        })
+        onSubmit(newCategory)
+      }
     } catch (error) {
       console.error("Error submitting form:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan kategori",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

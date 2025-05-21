@@ -1,115 +1,110 @@
 "use client"
-
-import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Users, Mail, Phone, Loader2 } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, Users, Mail, Phone } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { useState } from "react"
 import { CustomerForm } from "@/components/forms/customer-form"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { customerService, type Customer } from "@/lib/api-service"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
-import { DialogProvider, useDialog } from "@/components/dialog-context"
 
-function CustomersPageContent() {
-  const { openDialog, setDialogData } = useDialog()
+export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined)
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [editingCustomer, setEditingCustomer] = useState<any>(null)
 
-  useEffect(() => {
-    fetchCustomers()
-  }, [])
-
-  const fetchCustomers = async () => {
-    setIsLoading(true)
-    try {
-      const response = await customerService.getAll()
-      if (response.status === "success" && response.data) {
-        setCustomers(response.data)
-      } else {
-        toast({
-          title: "Error",
-          description: response.message || "Gagal memuat data pelanggan",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error fetching customers:", error)
-      toast({
-        title: "Error",
-        description: "Gagal memuat data pelanggan",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // Sample data for customers
+  const customers = [
+    {
+      id: 1,
+      name: "Budi Santoso",
+      email: "budi@example.com",
+      phone: "081234567890",
+      address: "Jl. Sudirman No. 123, Jakarta",
+      activeRentals: 2,
+      status: "Aktif",
+    },
+    {
+      id: 2,
+      name: "Siti Rahayu",
+      email: "siti@example.com",
+      phone: "081234567891",
+      address: "Jl. Thamrin No. 45, Jakarta",
+      activeRentals: 0,
+      status: "Aktif",
+    },
+    {
+      id: 3,
+      name: "Ahmad Hidayat",
+      email: "ahmad@example.com",
+      phone: "081234567892",
+      address: "Jl. Gatot Subroto No. 67, Jakarta",
+      activeRentals: 1,
+      status: "Aktif",
+    },
+    {
+      id: 4,
+      name: "Dewi Lestari",
+      email: "dewi@example.com",
+      phone: "081234567893",
+      address: "Jl. Kuningan No. 89, Jakarta",
+      activeRentals: 0,
+      status: "Aktif",
+    },
+    {
+      id: 5,
+      name: "Eko Prasetyo",
+      email: "eko@example.com",
+      phone: "081234567894",
+      address: "Jl. Menteng No. 12, Jakarta",
+      activeRentals: 3,
+      status: "Aktif",
+    },
+    {
+      id: 6,
+      name: "Rina Wijaya",
+      email: "rina@example.com",
+      phone: "081234567895",
+      address: "Jl. Kemang No. 34, Jakarta",
+      activeRentals: 0,
+      status: "Tidak Aktif",
+    },
+    {
+      id: 7,
+      name: "Doni Kusuma",
+      email: "doni@example.com",
+      phone: "081234567896",
+      address: "Jl. Senayan No. 56, Jakarta",
+      activeRentals: 1,
+      status: "Aktif",
+    },
+    {
+      id: 8,
+      name: "Maya Sari",
+      email: "maya@example.com",
+      phone: "081234567897",
+      address: "Jl. Cikini No. 78, Jakarta",
+      activeRentals: 0,
+      status: "Aktif",
+    },
+  ]
 
   const handleAddCustomer = () => {
-    setEditingCustomer(undefined)
+    setEditingCustomer(null)
     setIsFormOpen(true)
   }
 
-  const handleEditCustomer = (customer: Customer) => {
+  const handleEditCustomer = (customer: any) => {
     setEditingCustomer(customer)
     setIsFormOpen(true)
   }
 
-  const handleDeleteCustomer = (customer: Customer) => {
-    setDialogData({
-      itemName: customer.customer_name,
-      onConfirm: async () => {
-        try {
-          const response = await customerService.delete(customer.id)
-          if (response.status === "success") {
-            setCustomers((prev) => prev.filter((c) => c.id !== customer.id))
-            toast({
-              title: "Pelanggan berhasil dihapus",
-              description: `${customer.customer_name} telah dihapus dari daftar pelanggan.`,
-            })
-          } else {
-            throw new Error(response.message || "Gagal menghapus pelanggan")
-          }
-        } catch (error) {
-          console.error("Error deleting customer:", error)
-          toast({
-            title: "Error",
-            description: "Gagal menghapus pelanggan",
-            variant: "destructive",
-          })
-        }
-      },
-    })
-    openDialog("delete-confirmation")
+  const handleFormSubmit = (data: any) => {
+    console.log("Form submitted:", data)
+    // Here you would typically save the data to your backend
+    setIsFormOpen(false)
   }
-
-  const handleFormSubmit = (data: Customer) => {
-    if (editingCustomer) {
-      // Update existing customer in the list
-      setCustomers((prev) => prev.map((c) => (c.id === data.id ? data : c)))
-    } else {
-      // Add new customer to the list
-      setCustomers((prev) => [...prev, data])
-    }
-  }
-
-  // Filter customers based on search query
-  const filteredCustomers = customers.filter((customer) => {
-    if (!searchQuery) return true
-    const query = searchQuery.toLowerCase()
-    return (
-      customer.customer_name.toLowerCase().includes(query) ||
-      (customer.email && customer.email.toLowerCase().includes(query)) ||
-      (customer.phone_number && customer.phone_number.toLowerCase().includes(query))
-    )
-  })
 
   return (
     <div className="flex min-h-screen">
@@ -132,95 +127,74 @@ function CustomersPageContent() {
                 <CardTitle>Daftar Pelanggan</CardTitle>
                 <div className="relative w-64">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Cari pelanggan..."
-                    className="w-full bg-background pl-8"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                  <Input type="search" placeholder="Cari pelanggan..." className="w-full bg-background pl-8" />
                 </div>
               </div>
-              <CardDescription>Total {filteredCustomers.length} pelanggan terdaftar</CardDescription>
+              <CardDescription>Total {customers.length} pelanggan terdaftar</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="ml-2">Memuat data...</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Kontak</TableHead>
-                      <TableHead>No. Identitas</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Kontak</TableHead>
+                    <TableHead>Penyewaan Aktif</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell className="font-medium">{customer.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {customer.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center text-sm">
+                            <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                            {customer.email}
+                          </div>
+                          <div className="flex items-center text-sm">
+                            <Phone className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                            {customer.phone}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{customer.activeRentals} penyewaan</TableCell>
+                      <TableCell>
+                        <Badge variant={customer.status === "Aktif" ? "success" : "secondary"}>{customer.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Aksi</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" /> Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCustomers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
-                          {searchQuery ? "Tidak ada pelanggan yang sesuai dengan pencarian" : "Belum ada pelanggan"}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredCustomers.map((customer) => (
-                        <TableRow key={customer.id}>
-                          <TableCell className="font-medium">{customer.id}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              {customer.customer_name}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {customer.email && (
-                                <div className="flex items-center text-sm">
-                                  <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                                  {customer.email}
-                                </div>
-                              )}
-                              {customer.phone_number && (
-                                <div className="flex items-center text-sm">
-                                  <Phone className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                                  {customer.phone_number}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>{customer.identity_number || "-"}</TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Aksi</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>
-                                  <Pencil className="mr-2 h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => handleDeleteCustomer(customer)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
@@ -231,16 +205,6 @@ function CustomersPageContent() {
         initialData={editingCustomer}
         onSubmit={handleFormSubmit}
       />
-      <DeleteConfirmation />
-      <Toaster />
     </div>
-  )
-}
-
-export default function CustomersPage() {
-  return (
-    <DialogProvider>
-      <CustomersPageContent />
-    </DialogProvider>
   )
 }

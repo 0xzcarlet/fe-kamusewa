@@ -1,42 +1,41 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { CustomDialog } from "@/components/custom-dialog"
+import { Button } from "@/components/ui/button"
+import { useDialog } from "@/components/dialog-context"
 import { useAuth } from "@/lib/auth-context"
 
-export function LogoutDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function LogoutDialog() {
   const router = useRouter()
+  const { activeDialog, closeDialog } = useDialog()
   const { logout } = useAuth()
+  const isOpen = activeDialog === "logout"
+
+  if (!isOpen) return null
 
   const handleLogout = () => {
-    logout()
-    onOpenChange(false)
-    router.push("/login")
+    closeDialog()
+    // Call the logout function from auth context
+    setTimeout(() => {
+      logout()
+      router.push("/login")
+    }, 300)
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Konfirmasi Keluar</AlertDialogTitle>
-          <AlertDialogDescription>
-            Apakah Anda yakin ingin keluar dari aplikasi? Semua sesi Anda akan berakhir.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Batal</AlertDialogCancel>
-          <AlertDialogAction onClick={handleLogout}>Keluar</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <CustomDialog
+      open={isOpen}
+      onClose={closeDialog}
+      title="Konfirmasi Keluar"
+      description="Apakah Anda yakin ingin keluar dari aplikasi? Semua sesi Anda akan berakhir."
+    >
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={closeDialog}>
+          Batal
+        </Button>
+        <Button onClick={handleLogout}>Keluar</Button>
+      </div>
+    </CustomDialog>
   )
 }

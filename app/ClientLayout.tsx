@@ -5,6 +5,7 @@ import type React from "react"
 import { useEffect } from "react"
 import "./globals.css"
 import { DialogProvider } from "@/components/dialog-context"
+import { AuthProvider } from "@/lib/auth-context"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   // Global cleanup function to remove any lingering portals
@@ -63,7 +64,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <html lang="en">
       <body>
-        <DialogProvider>{children}</DialogProvider>
+        <AuthProvider>
+          <DialogProvider>{children}</DialogProvider>
+        </AuthProvider>
       </body>
     </html>
   )

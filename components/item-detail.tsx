@@ -7,14 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Edit, ShoppingBag } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { useEffect, useState } from "react"
+import type { Item } from "@/lib/api-service"
 
 export function ItemDetail() {
   const { activeDialog, closeDialog, dialogData: item, openDialog, setDialogData } = useDialog()
   const isOpen = activeDialog === "item-detail"
-  const [itemData, setItemData] = useState(item)
+  const [itemData, setItemData] = useState<Item | null>(null)
 
   useEffect(() => {
-    setItemData(item)
+    if (item) {
+      setItemData(item as Item)
+    }
   }, [item])
 
   if (!isOpen || !itemData) return null
@@ -28,6 +31,14 @@ export function ItemDetail() {
     }, 300)
   }
 
+  // Helper function to get category name
+  const getCategoryName = () => {
+    if (itemData.categories && itemData.categories.length > 0) {
+      return itemData.categories[0].category_name
+    }
+    return "Uncategorized"
+  }
+
   return (
     <CustomDialog
       open={isOpen}
@@ -37,36 +48,30 @@ export function ItemDetail() {
       className="sm:max-w-[550px]"
     >
       <div className="grid gap-6">
-        {itemData.image_url ? (
-          <div className="w-full h-64 rounded-md overflow-hidden border">
-            <img
-              src={itemData.image_url || "/placeholder.svg"}
-              alt={itemData.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-48 rounded-md bg-muted flex items-center justify-center">
-            <ShoppingBag className="h-16 w-16 text-muted-foreground" />
-          </div>
-        )}
+        <div className="w-full h-48 rounded-md bg-muted flex items-center justify-center">
+          <ShoppingBag className="h-16 w-16 text-muted-foreground" />
+        </div>
 
         <div>
-          <h3 className="text-xl font-semibold">{itemData.name}</h3>
+          <h3 className="text-xl font-semibold">{itemData.item_name}</h3>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline">{itemData.category}</Badge>
-            <Badge variant={itemData.status === "Tersedia" ? "success" : "secondary"}>{itemData.status}</Badge>
+            <Badge variant="outline">{getCategoryName()}</Badge>
+            <Badge variant={itemData.available_stock > 0 ? "success" : "secondary"}>
+              {itemData.available_stock > 0 ? "Tersedia" : "Tidak Tersedia"}
+            </Badge>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Harga Sewa/Hari</p>
-            <p className="text-lg font-medium">Rp {itemData.price.toLocaleString("id-ID")}</p>
+            <p className="text-lg font-medium">Rp {itemData.rental_price.toLocaleString("id-ID")}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Stok Tersedia</p>
-            <p className="text-lg font-medium">{itemData.stock} unit</p>
+            <p className="text-lg font-medium">
+              {itemData.available_stock} / {itemData.total_stock} unit
+            </p>
           </div>
         </div>
 

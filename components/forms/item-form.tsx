@@ -12,25 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, X, Upload } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { toast } from "@/components/ui/use-toast"
-import { getCategories, createItem, updateItem } from "@/lib/data"
-
-interface Category {
-  id: number
-  name: string
-}
+import { categoryService, itemService, type Category } from "@/lib/api-service"
 
 export function ItemForm() {
   const { activeDialog, closeDialog, dialogData: initialData } = useDialog()
   const isOpen = activeDialog === "item-form"
 
   const [formData, setFormData] = useState({
-    name: "",
+    item_name: "",
     category_id: "",
-    price: 0,
-    stock: 1,
+    rental_price: 0,
+    total_stock: 1,
+    available_stock: 1,
     description: "",
-    status: "Tersedia",
-    image_url: "",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -50,36 +44,45 @@ export function ItemForm() {
     if (isOpen) {
       if (initialData) {
         setFormData({
-          name: initialData.name || "",
-          category_id: initialData.category_id?.toString() || "",
-          price: initialData.price || 0,
-          stock: initialData.stock || 1,
+          item_name: initialData.item_name || "",
+          category_id:
+            initialData.categories && initialData.categories.length > 0 ? initialData.categories[0].id.toString() : "",
+          rental_price: initialData.rental_price || 0,
+          total_stock: initialData.total_stock || 1,
+          available_stock: initialData.available_stock || 1,
           description: initialData.description || "",
-          status: initialData.status || "Tersedia",
-          image_url: initialData.image_url || "",
         })
-        setPreviewImage(initialData.image_url || null)
+        // In a real app, you would set the image from the API
+        setPreviewImage(null)
       } else {
         // Reset form for new item
         setFormData({
-          name: "",
+          item_name: "",
           category_id: "",
-          price: 0,
-          stock: 1,
+          rental_price: 0,
+          total_stock: 1,
+          available_stock: 1,
           description: "",
-          status: "Tersedia",
-          image_url: "",
         })
         setPreviewImage(null)
       }
     }
   }, [initialData, isOpen])
 
-  const fetchCategories = () => {
+  const fetchCategories = async () => {
     setLoadingCategories(true)
     try {
-      const data = getCategories()
-      setCategories(data)
+      const response = await categoryService.getAll()
+
+      if (response.status === "success" && response.data) {
+        setCategories(response.data)
+      } else {
+        toast({
+          title: "Error",
+          description: "Gagal memuat data kategori",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error fetching categories:", error)
       toast({
@@ -115,13 +118,11 @@ export function ItemForm() {
       // For this demo, we'll create a local object URL
       const imageUrl = URL.createObjectURL(file)
       setPreviewImage(imageUrl)
-      setFormData((prev) => ({ ...prev, image_url: imageUrl }))
     }
   }
 
   const handleRemoveImage = () => {
     setPreviewImage(null)
-    setFormData((prev) => ({ ...prev, image_url: "" }))
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -132,52 +133,44 @@ export function ItemForm() {
     setIsLoading(true)
 
     try {
+      const itemData = {
+        item_name: formData.item_name,
+        description: formData.description,
+        rental_price: formData.rental_price,
+        total_stock: formData.total_stock,
+        available_stock: formData.available_stock,
+        category_ids: formData.category_id ? [Number(formData.category_id)] : [],
+      }
+
       if (initialData && initialData.id) {
         // Update existing item
-        const updatedItem = updateItem(initialData.id, {
-          name: formData.name,
-          category_id: formData.category_id ? Number(formData.category_id) : undefined,
-          price: formData.price,
-          stock: formData.stock,
-          status: formData.status,
-          description: formData.description,
-          image_url: formData.image_url,
-        })
+        const response = await itemService.update(initialData.id, itemData)
 
-        if (!updatedItem) {
-          throw new Error("Failed to update item")
+        if (response.status !== "success") {
+          throw new Error(response.message || "Failed to update item")
         }
 
         toast({
           title: "Barang berhasil diperbarui",
-          description: `Barang ${updatedItem.name} telah diperbarui.`,
+          description: `Barang ${formData.item_name} telah diperbarui.`,
         })
-
-        // Call the onSubmit callback if provided
-        if (initialData.onSubmit) {
-          initialData.onSubmit(updatedItem)
-        }
       } else {
         // Create new item
-        const newItem = createItem({
-          name: formData.name,
-          category_id: formData.category_id ? Number(formData.category_id) : 1,
-          price: formData.price,
-          stock: formData.stock,
-          status: formData.status,
-          description: formData.description,
-          image_url: formData.image_url,
-        })
+        const response = await itemService.create(itemData)
+
+        if (response.status !== "success") {
+          throw new Error(response.message || "Failed to create item")
+        }
 
         toast({
           title: "Barang berhasil ditambahkan",
-          description: `Barang ${newItem.name} telah ditambahkan.`,
+          description: `Barang ${formData.item_name} telah ditambahkan.`,
         })
+      }
 
-        // Call the onSubmit callback if provided
-        if (initialData && initialData.onSubmit) {
-          initialData.onSubmit(newItem)
-        }
+      // Call the onSubmit callback if provided
+      if (initialData && initialData.onSubmit) {
+        initialData.onSubmit()
       }
 
       closeDialog()
@@ -206,11 +199,11 @@ export function ItemForm() {
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Nama Barang</Label>
+            <Label htmlFor="item_name">Nama Barang</Label>
             <Input
-              id="name"
-              name="name"
-              value={formData.name}
+              id="item_name"
+              name="item_name"
+              value={formData.item_name}
               onChange={handleChange}
               placeholder="Masukkan nama barang"
               required
@@ -229,7 +222,7 @@ export function ItemForm() {
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
+                    {category.category_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -237,12 +230,12 @@ export function ItemForm() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="price">Harga Sewa/Hari (Rp)</Label>
+              <Label htmlFor="rental_price">Harga Sewa/Hari (Rp)</Label>
               <Input
-                id="price"
-                name="price"
+                id="rental_price"
+                name="rental_price"
                 type="number"
-                value={formData.price}
+                value={formData.rental_price}
                 onChange={handleNumberChange}
                 placeholder="0"
                 min={0}
@@ -250,18 +243,32 @@ export function ItemForm() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="stock">Stok</Label>
+              <Label htmlFor="total_stock">Total Stok</Label>
               <Input
-                id="stock"
-                name="stock"
+                id="total_stock"
+                name="total_stock"
                 type="number"
-                value={formData.stock}
+                value={formData.total_stock}
                 onChange={handleNumberChange}
                 placeholder="1"
                 min={0}
                 required
               />
             </div>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="available_stock">Stok Tersedia</Label>
+            <Input
+              id="available_stock"
+              name="available_stock"
+              type="number"
+              value={formData.available_stock}
+              onChange={handleNumberChange}
+              placeholder="1"
+              min={0}
+              max={formData.total_stock}
+              required
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="description">Deskripsi</Label>
@@ -273,20 +280,6 @@ export function ItemForm() {
               placeholder="Masukkan deskripsi barang"
               rows={3}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Tersedia">Tersedia</SelectItem>
-                <SelectItem value="Disewa">Disewa</SelectItem>
-                <SelectItem value="Perbaikan">Perbaikan</SelectItem>
-                <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div className="grid gap-2">
             <Label>Foto Barang</Label>

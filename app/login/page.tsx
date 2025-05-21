@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Package } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,14 +26,15 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const result = await login(email, password)
 
-      // In a real app, you would make an API call to authenticate
-      // For demo purposes, we'll just redirect to the dashboard
-      router.push("/dashboard")
+      if (result.success) {
+        router.push("/dashboard")
+      } else {
+        setError(result.message || "Email atau password salah. Silakan coba lagi.")
+      }
     } catch (err) {
-      setError("Email atau password salah. Silakan coba lagi.")
+      setError("Terjadi kesalahan. Silakan coba lagi.")
     } finally {
       setIsLoading(false)
     }

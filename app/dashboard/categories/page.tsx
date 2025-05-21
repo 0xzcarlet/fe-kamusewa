@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { FolderTree, Plus, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { FolderTree, Plus, Search, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState, useEffect } from "react"
@@ -11,8 +11,8 @@ import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { useDialog } from "@/components/dialog-context"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
-import { getCategories, deleteCategory, type Category } from "@/lib/data"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { categoryService, type Category } from "@/lib/api-service"
 
 export default function CategoriesPage() {
   const { openDialog, setDialogData } = useDialog()
@@ -27,11 +27,20 @@ export default function CategoriesPage() {
     fetchCategories()
   }, [])
 
-  const fetchCategories = () => {
+  const fetchCategories = async () => {
     setIsLoading(true)
     try {
-      const data = getCategories()
-      setCategories(data)
+      const response = await categoryService.getAll()
+
+      if (response.status === "success" && response.data) {
+        setCategories(response.data)
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Gagal memuat data kategori",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error fetching categories:", error)
       toast({
@@ -56,22 +65,22 @@ export default function CategoriesPage() {
 
   const handleDeleteCategory = (category: Category) => {
     setDialogData({
-      itemName: category.name,
-      onConfirm: () => {
+      itemName: category.category_name,
+      onConfirm: async () => {
         try {
-          const success = deleteCategory(category.id)
+          const response = await categoryService.delete(category.id)
 
-          if (!success) {
-            throw new Error("Failed to delete category")
+          if (response.status === "success") {
+            // Remove the category from the state
+            setCategories((prev) => prev.filter((c) => c.id !== category.id))
+
+            toast({
+              title: "Kategori berhasil dihapus",
+              description: `Kategori ${category.category_name} telah dihapus.`,
+            })
+          } else {
+            throw new Error(response.message || "Failed to delete category")
           }
-
-          // Remove the category from the state
-          setCategories((prev) => prev.filter((c) => c.id !== category.id))
-
-          toast({
-            title: "Kategori berhasil dihapus",
-            description: `Kategori ${category.name} telah dihapus.`,
-          })
         } catch (error) {
           console.error("Error deleting category:", error)
           toast({
@@ -85,13 +94,27 @@ export default function CategoriesPage() {
     openDialog("delete-confirmation")
   }
 
-  const handleFormSubmit = (data: Category) => {
+  const handleFormSubmit = async (data: any) => {
     if (editingCategory) {
       // Update existing category in the state
-      setCategories((prev) => prev.map((c) => (c.id === data.id ? data : c)))
+      const updatedCategory = await categoryService.update(editingCategory.id, {
+        category_name: data.name,
+        description: data.description,
+      })
+
+      if (updatedCategory.status === "success" && updatedCategory.data) {
+        setCategories((prev) => prev.map((c) => (c.id === updatedCategory.data.id ? updatedCategory.data : c)))
+      }
     } else {
       // Add new category to the state
-      setCategories((prev) => [...prev, data])
+      const newCategory = await categoryService.create({
+        category_name: data.name,
+        description: data.description,
+      })
+
+      if (newCategory.status === "success" && newCategory.data) {
+        setCategories((prev) => [...prev, newCategory.data])
+      }
     }
     setIsFormOpen(false)
   }
@@ -99,7 +122,7 @@ export default function CategoriesPage() {
   // Filter categories based on search query
   const filteredCategories = categories.filter(
     (category) =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.category_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase())),
   )
 
@@ -138,7 +161,8 @@ export default function CategoriesPage() {
             <CardContent>
               {isLoading ? (
                 <div className="flex justify-center items-center py-8">
-                  <p>Memuat data...</p>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="ml-2">Memuat data...</p>
                 </div>
               ) : (
                 <Table>
@@ -164,7 +188,7 @@ export default function CategoriesPage() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <FolderTree className="h-4 w-4 text-muted-foreground" />
-                              {category.name}
+                              {category.category_name}
                             </div>
                           </TableCell>
                           <TableCell>{category.description || "-"}</TableCell>
@@ -202,7 +226,15 @@ export default function CategoriesPage() {
       <CategoryForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        initialData={editingCategory || undefined}
+        initialData={
+          editingCategory
+            ? {
+                id: editingCategory.id,
+                name: editingCategory.category_name,
+                description: editingCategory.description,
+              }
+            : undefined
+        }
         onSubmit={handleFormSubmit}
       />
       <DeleteConfirmation />

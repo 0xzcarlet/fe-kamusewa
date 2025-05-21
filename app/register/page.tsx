@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Package } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/lib/auth-context"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { register } = useAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -41,12 +43,15 @@ export default function RegisterPage() {
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // The API doesn't have a companyName field, so we'll just use the name field
+      // In a real app, you might want to combine these or handle differently
+      const result = await register(formData.name, formData.email, formData.password)
 
-      // In a real app, you would make an API call to register the user
-      // For demo purposes, we'll just redirect to the dashboard
-      router.push("/dashboard")
+      if (result.success) {
+        router.push("/dashboard")
+      } else {
+        setError(result.message || "Terjadi kesalahan saat mendaftar. Silakan coba lagi.")
+      }
     } catch (err) {
       setError("Terjadi kesalahan saat mendaftar. Silakan coba lagi.")
     } finally {

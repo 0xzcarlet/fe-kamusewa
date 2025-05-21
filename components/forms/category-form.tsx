@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
-import { createCategory, updateCategory } from "@/lib/data"
 
 interface CategoryFormProps {
   open: boolean
@@ -67,29 +66,14 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
     setIsLoading(true)
 
     try {
-      if (initialData?.id) {
-        // Update existing category
-        const updatedCategory = updateCategory(initialData.id, formData)
+      await onSubmit(formData)
 
-        if (!updatedCategory) {
-          throw new Error("Failed to update category")
-        }
-
-        toast({
-          title: "Kategori berhasil diperbarui",
-          description: `Kategori ${updatedCategory.name} telah diperbarui.`,
-        })
-        onSubmit(updatedCategory)
-      } else {
-        // Create new category
-        const newCategory = createCategory(formData)
-
-        toast({
-          title: "Kategori berhasil ditambahkan",
-          description: `Kategori ${newCategory.name} telah ditambahkan.`,
-        })
-        onSubmit(newCategory)
-      }
+      toast({
+        title: initialData?.id ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan",
+        description: initialData?.id
+          ? `Kategori ${formData.name} telah diperbarui.`
+          : `Kategori ${formData.name} telah ditambahkan.`,
+      })
 
       // Close the dialog
       onOpenChange(false)

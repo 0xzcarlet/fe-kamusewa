@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, ShoppingBag } from "lucide-react"
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, ShoppingBag, Loader2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -18,25 +18,8 @@ import { ItemDetail } from "@/components/item-detail"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { ItemForm } from "@/components/forms/item-form"
-import { getCategories, getItems, deleteItem } from "@/lib/data"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-
-interface Category {
-  id: number
-  name: string
-}
-
-interface Item {
-  id: number
-  name: string
-  category: string
-  category_id: number
-  price: number
-  stock: number
-  status: string
-  description: string
-  image_url: string
-}
+import { itemService, categoryService, type Item, type Category } from "@/lib/api-service"
 
 // Wrap the main content with the dialog provider
 function ItemsPageContent() {
@@ -60,15 +43,19 @@ function ItemsPageContent() {
     fetchItems()
   }, [])
 
-  // Fetch items when search or filter changes
-  useEffect(() => {
-    fetchItems()
-  }, [searchQuery, categoryFilter])
-
-  const fetchCategories = () => {
+  const fetchCategories = async () => {
     try {
-      const data = getCategories()
-      setCategories(data)
+      const response = await categoryService.getAll()
+
+      if (response.status === "success" && response.data) {
+        setCategories(response.data)
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Gagal memuat data kategori",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error fetching categories:", error)
       toast({
@@ -79,13 +66,39 @@ function ItemsPageContent() {
     }
   }
 
-  const fetchItems = () => {
+  const fetchItems = async () => {
     setIsLoading(true)
     try {
-      const categoryId = categoryFilter !== "all" ? Number(categoryFilter) : undefined
-      const data = getItems(searchQuery, categoryId)
-      setItems(data)
-      setTotalItems(data.length)
+      const response = await itemService.getAll()
+
+      if (response.status === "success" && response.data) {
+        // Filter items based on search query and category filter
+        // Note: This is client-side filtering since the API doesn't support filtering yet
+        let filteredItems = response.data
+
+        if (searchQuery) {
+          const searchLower = searchQuery.toLowerCase()
+          filteredItems = filteredItems.filter(
+            (item) =>
+              item.item_name.toLowerCase().includes(searchLower) ||
+              (item.description && item.description.toLowerCase().includes(searchLower)),
+          )
+        }
+
+        if (categoryFilter !== "all") {
+          const categoryId = Number(categoryFilter)
+          filteredItems = filteredItems.filter((item) => item.categories.some((cat) => cat.id === categoryId))
+        }
+
+        setItems(filteredItems)
+        setTotalItems(filteredItems.length)
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Gagal memuat data barang",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Error fetching items:", error)
       toast({
@@ -120,23 +133,23 @@ function ItemsPageContent() {
 
   const handleDeleteItem = (item: Item) => {
     setDialogData({
-      itemName: item.name,
-      onConfirm: () => {
+      itemName: item.item_name,
+      onConfirm: async () => {
         try {
-          const success = deleteItem(item.id)
+          const response = await itemService.delete(item.id)
 
-          if (!success) {
-            throw new Error("Failed to delete item")
+          if (response.status === "success") {
+            // Remove the item from the state
+            setItems((prevItems) => prevItems.filter((i) => i.id !== item.id))
+            setTotalItems((prev) => prev - 1)
+
+            toast({
+              title: "Barang berhasil dihapus",
+              description: `${item.item_name} telah dihapus dari daftar barang.`,
+            })
+          } else {
+            throw new Error(response.message || "Failed to delete item")
           }
-
-          // Remove the item from the state
-          setItems((prevItems) => prevItems.filter((i) => i.id !== item.id))
-          setTotalItems((prev) => prev - 1)
-
-          toast({
-            title: "Barang berhasil dihapus",
-            description: `${item.name} telah dihapus dari daftar barang.`,
-          })
         } catch (error) {
           console.error("Error deleting item:", error)
           toast({
@@ -177,6 +190,14 @@ function ItemsPageContent() {
   // Paginate items
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
+  // Helper function to get category name from an item
+  const getCategoryName = (item: Item) => {
+    if (item.categories && item.categories.length > 0) {
+      return item.categories[0].category_name
+    }
+    return "Uncategorized"
+  }
+
   return (
     <div className="flex min-h-screen">
       <DashboardSidebar />
@@ -215,7 +236,7 @@ function ItemsPageContent() {
                       <SelectItem value="all">Semua Kategori</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
+                          {category.category_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -227,7 +248,8 @@ function ItemsPageContent() {
             <CardContent>
               {isLoading ? (
                 <div className="flex justify-center items-center py-8">
-                  <p>Memuat data...</p>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="ml-2">Memuat data...</p>
                 </div>
               ) : (
                 <Table>
@@ -257,29 +279,23 @@ function ItemsPageContent() {
                           <TableCell className="font-medium">{item.id}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {item.image_url ? (
-                                <div className="h-8 w-8 rounded-md overflow-hidden">
-                                  <img
-                                    src={item.image_url || "/placeholder.svg"}
-                                    alt={item.name}
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                              ) : (
-                                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                              )}
-                              {item.name}
+                              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                              {item.item_name}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="font-normal">
-                              {item.category}
+                              {getCategoryName(item)}
                             </Badge>
                           </TableCell>
-                          <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
-                          <TableCell>{item.stock} unit</TableCell>
+                          <TableCell>Rp {item.rental_price.toLocaleString("id-ID")}</TableCell>
                           <TableCell>
-                            <Badge variant={item.status === "Tersedia" ? "success" : "secondary"}>{item.status}</Badge>
+                            {item.available_stock} / {item.total_stock} unit
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={item.available_stock > 0 ? "success" : "secondary"}>
+                              {item.available_stock > 0 ? "Tersedia" : "Tidak Tersedia"}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>

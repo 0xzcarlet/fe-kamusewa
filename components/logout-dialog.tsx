@@ -4,19 +4,21 @@ import { useRouter } from "next/navigation"
 import { CustomDialog } from "@/components/custom-dialog"
 import { Button } from "@/components/ui/button"
 import { useDialog } from "@/components/dialog-context"
+import { useAuth } from "@/lib/auth-context"
 
 export function LogoutDialog() {
   const router = useRouter()
   const { activeDialog, closeDialog } = useDialog()
+  const { logout } = useAuth()
   const isOpen = activeDialog === "logout"
 
   if (!isOpen) return null
 
   const handleLogout = () => {
     closeDialog()
-    // In a real app, you would call your logout API here
-    // For now, we'll just redirect to the login page
+    // Call the logout function from auth context
     setTimeout(() => {
+      logout()
       router.push("/login")
     }, 300)
   }

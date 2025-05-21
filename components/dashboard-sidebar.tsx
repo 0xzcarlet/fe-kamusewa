@@ -1,323 +1,159 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { BarChart3, Package, ShoppingBag, Users, FileText, Settings, Menu, X, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Package, Menu, User, LogOut, Home, FolderTree, ShoppingBag, Users, Calendar, AlertCircle } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useDialog } from "@/components/dialog-context"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown } from "lucide-react"
-
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-  subItems?: { href: string; label: string }[]
-}
+import { LogoutDialog } from "@/components/logout-dialog"
 
 export function DashboardSidebar() {
-  const { openDialog } = useDialog()
-  const [open, setOpen] = useState(false)
-  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
   const pathname = usePathname()
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
 
-  // Initialize open submenus based on current path
-  useEffect(() => {
-    const newOpenSubmenus: Record<string, boolean> = {}
-    navItems.forEach((item, index) => {
-      if (item.subItems) {
-        // Check if current path is the main item or any of its subitems
-        const isActive = pathname === item.href || item.subItems.some((subItem) => pathname === subItem.href)
-        if (isActive) {
-          newOpenSubmenus[index] = true
-        }
-      }
-    })
-    setOpenSubmenus(newOpenSubmenus)
-  }, [pathname])
-
-  const navItems: NavItem[] = [
+  const routes = [
     {
-      href: "/dashboard",
       label: "Dashboard",
-      icon: Home,
-      subItems: [{ href: "/dashboard/analytics", label: "Analitik" }],
+      icon: BarChart3,
+      href: "/dashboard",
+      active: pathname === "/dashboard",
     },
     {
-      href: "/dashboard/categories",
       label: "Kategori",
-      icon: FolderTree,
-      subItems: [{ href: "/dashboard/categories/reports", label: "Laporan Kategori" }],
+      icon: Package,
+      href: "/dashboard/categories",
+      active: pathname === "/dashboard/categories",
     },
     {
-      href: "/dashboard/items",
       label: "Barang",
       icon: ShoppingBag,
-      subItems: [{ href: "/dashboard/items/inventory", label: "Inventaris" }],
+      href: "/dashboard/items",
+      active: pathname === "/dashboard/items",
     },
     {
-      href: "/dashboard/customers",
       label: "Pelanggan",
       icon: Users,
-      subItems: [{ href: "/dashboard/customers/vip", label: "Pelanggan VIP" }],
+      href: "/dashboard/customers",
+      active: pathname === "/dashboard/customers",
     },
     {
-      href: "/dashboard/rentals",
       label: "Penyewaan",
-      icon: Calendar,
-      subItems: [{ href: "/dashboard/rentals/history", label: "Riwayat Penyewaan" }],
+      icon: FileText,
+      href: "/dashboard/rentals",
+      active: pathname === "/dashboard/rentals",
     },
     {
-      href: "/dashboard/fines",
       label: "Denda",
-      icon: AlertCircle,
-      subItems: [{ href: "/dashboard/fines/reports", label: "Laporan Denda" }],
+      icon: FileText,
+      href: "/dashboard/fines",
+      active: pathname === "/dashboard/fines",
+    },
+    {
+      label: "Pengaturan",
+      icon: Settings,
+      href: "/profile",
+      active: pathname === "/profile",
     },
   ]
 
-  const handleLogout = () => {
-    setOpen(false)
-    openDialog("logout")
-  }
-
-  const toggleSubmenu = (index: number) => {
-    setOpenSubmenus((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }))
-  }
-
-  // Check if a menu item or any of its subitems is active
-  const isMenuActive = (item: NavItem) => {
-    if (pathname === item.href) return true
-    if (item.subItems && item.subItems.some((subItem) => pathname === subItem.href)) return true
-    return false
-  }
-
-  // For mobile
-  const MobileSidebar = () => (
-    <div className="md:hidden fixed top-0 left-0 z-40 w-full h-16 flex items-center px-4 bg-background border-b">
-      <Sheet open={open} onOpenChange={setOpen}>
-        <div className="flex items-center justify-between w-full">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Package className="h-6 w-6" />
-            <span>KamuSewa</span>
-          </Link>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="ml-auto">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-        </div>
-        <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0">
-          <div className="flex flex-col h-full">
-            <div className="p-4 border-b">
-              <Link href="/" className="flex items-center gap-2 font-semibold" onClick={() => setOpen(false)}>
-                <Package className="h-6 w-6" />
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="fixed left-4 top-4 z-40 rounded-full md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0">
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b px-4 py-2">
+              <Link href="/" className="flex items-center gap-2 font-semibold">
+                <ShoppingBag className="h-5 w-5" />
                 <span>KamuSewa</span>
               </Link>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Close Menu</span>
+                </Button>
+              </SheetTrigger>
             </div>
-            <nav className="flex flex-col p-4 gap-1 overflow-y-auto">
-              {navItems.map((item, index) => (
-                <div key={item.href} className="flex flex-col">
-                  {item.subItems && item.subItems.length > 0 ? (
-                    <Collapsible
-                      open={openSubmenus[index]}
-                      onOpenChange={() => toggleSubmenu(index)}
-                      className="w-full"
-                    >
-                      <CollapsibleTrigger asChild>
-                        <button
-                          className={cn(
-                            "flex items-center justify-between w-full h-10 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                            isMenuActive(item)
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                          )}
-                        >
-                          <div className="flex items-center">
-                            <item.icon className="h-4 w-4 mr-2" />
-                            {item.label}
-                          </div>
-                          <ChevronDown
-                            className={cn(
-                              "h-4 w-4 transition-transform",
-                              openSubmenus[index] && "transform rotate-180",
-                            )}
-                          />
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pl-6 pt-1">
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            "flex items-center h-8 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                            pathname === item.href
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                          )}
-                          onClick={() => setOpen(false)}
-                        >
-                          Overview
-                        </Link>
-                        {item.subItems.map((subItem) => (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            className={cn(
-                              "flex items-center h-8 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                              pathname === subItem.href
-                                ? "bg-accent text-accent-foreground"
-                                : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                            )}
-                            onClick={() => setOpen(false)}
-                          >
-                            {subItem.label}
-                          </Link>
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
+            <nav className="flex-1 overflow-auto py-4">
+              <div className="px-3 py-2">
+                <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-tight">Menu</h2>
+                <div className="space-y-1">
+                  {routes.map((route) => (
                     <Link
-                      href={item.href}
+                      key={route.href}
+                      href={route.href}
                       className={cn(
-                        "flex items-center h-10 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                        pathname === item.href
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                        "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                        route.active ? "bg-accent text-accent-foreground" : "transparent",
                       )}
-                      onClick={() => setOpen(false)}
                     >
-                      <item.icon className="h-4 w-4 mr-2" />
-                      {item.label}
+                      <route.icon className="h-5 w-5" />
+                      {route.label}
                     </Link>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </nav>
-            <div className="mt-auto p-4 border-t">
-              <div className="flex flex-col gap-2">
-                <Button variant="outline" size="sm" asChild onClick={() => setOpen(false)}>
-                  <Link href="/profile" className="w-full justify-start">
-                    <User className="h-4 w-4 mr-2" />
-                    Profil
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Keluar
-                </Button>
               </div>
+            </nav>
+            <div className="border-t p-4">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => setIsLogoutDialogOpen(true)}
+              >
+                <LogOut className="h-5 w-5" />
+                Keluar
+              </Button>
             </div>
           </div>
         </SheetContent>
       </Sheet>
-    </div>
-  )
 
-  // For desktop
-  return (
-    <>
-      <MobileSidebar />
-
-      <div className="hidden md:flex h-screen w-64 flex-col border-r bg-background fixed left-0 top-0 overflow-hidden">
-        <div className="p-4 border-b">
+      {/* Desktop Sidebar */}
+      <div className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r bg-background md:flex md:flex-col">
+        <div className="flex h-14 items-center border-b px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Package className="h-6 w-6" />
+            <ShoppingBag className="h-5 w-5" />
             <span>KamuSewa</span>
           </Link>
         </div>
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="space-y-1">
-            {navItems.map((item, index) => (
-              <li key={item.href}>
-                {item.subItems && item.subItems.length > 0 ? (
-                  <Collapsible open={openSubmenus[index]} onOpenChange={() => toggleSubmenu(index)} className="w-full">
-                    <CollapsibleTrigger asChild>
-                      <button
-                        className={cn(
-                          "flex items-center justify-between w-full h-10 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                          isMenuActive(item)
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                        )}
-                      >
-                        <div className="flex items-center">
-                          <item.icon className="h-4 w-4 mr-2" />
-                          {item.label}
-                        </div>
-                        <ChevronDown
-                          className={cn("h-4 w-4 transition-transform", openSubmenus[index] && "transform rotate-180")}
-                        />
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-6 pt-1">
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center h-8 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                          pathname === item.href
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                        )}
-                      >
-                        Overview
-                      </Link>
-                      {item.subItems.map((subItem) => (
-                        <Link
-                          key={subItem.href}
-                          href={subItem.href}
-                          className={cn(
-                            "flex items-center h-8 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                            pathname === subItem.href
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                          )}
-                        >
-                          {subItem.label}
-                        </Link>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center h-10 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      pathname === item.href
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                    )}
-                  >
-                    <item.icon className="h-4 w-4 mr-2" />
-                    {item.label}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="p-4 border-t">
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/profile" className="w-full justify-start">
-                <User className="h-4 w-4 mr-2" />
-                Profil
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => openDialog("logout")}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Keluar
-            </Button>
+        <nav className="flex-1 overflow-auto py-4">
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-tight">Menu</h2>
+            <div className="space-y-1">
+              {routes.map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    route.active ? "bg-accent text-accent-foreground" : "transparent",
+                  )}
+                >
+                  <route.icon className="h-5 w-5" />
+                  {route.label}
+                </Link>
+              ))}
+            </div>
           </div>
+        </nav>
+        <div className="border-t p-4">
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={() => setIsLogoutDialogOpen(true)}>
+            <LogOut className="h-5 w-5" />
+            Keluar
+          </Button>
         </div>
       </div>
+
+      {/* Logout Dialog */}
+      <LogoutDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen} />
     </>
   )
 }

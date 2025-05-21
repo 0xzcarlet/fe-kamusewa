@@ -14,30 +14,27 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/components/ui/use-toast"
+import {
+  customerService,
+  type Customer,
+  type CreateCustomerRequest,
+  type UpdateCustomerRequest,
+} from "@/lib/api-service"
 
 interface CustomerFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialData?: {
-    id?: number
-    name: string
-    email: string
-    phone: string
-    address: string
-    status: string
-  }
-  onSubmit: (data: any) => void
+  initialData?: Customer
+  onSubmit: (data: Customer) => void
 }
 
 export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: CustomerFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
+  const [formData, setFormData] = useState<CreateCustomerRequest | UpdateCustomerRequest>({
+    customer_name: "",
     email: "",
-    phone: "",
-    address: "",
-    status: "Aktif",
+    phone_number: "",
+    identity_number: "",
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -46,20 +43,18 @@ export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: Cust
     if (open) {
       if (initialData) {
         setFormData({
-          name: initialData.name || "",
+          customer_name: initialData.customer_name || "",
           email: initialData.email || "",
-          phone: initialData.phone || "",
-          address: initialData.address || "",
-          status: initialData.status || "Aktif",
+          phone_number: initialData.phone_number || "",
+          identity_number: initialData.identity_number || "",
         })
       } else {
         // Reset form for new customer
         setFormData({
-          name: "",
+          customer_name: "",
           email: "",
-          phone: "",
-          address: "",
-          status: "Aktif",
+          phone_number: "",
+          identity_number: "",
         })
       }
     }
@@ -73,23 +68,38 @@ export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: Cust
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      onSubmit({
-        ...formData,
-        id: initialData?.id,
-      })
+      let response
+
+      if (initialData?.id) {
+        // Update existing customer
+        response = await customerService.update(initialData.id, formData)
+      } else {
+        // Create new customer
+        response = await customerService.create(formData as CreateCustomerRequest)
+      }
+
+      if (response.status === "success" && response.data) {
+        toast({
+          title: initialData?.id ? "Pelanggan berhasil diperbarui" : "Pelanggan berhasil ditambahkan",
+          description: `${formData.customer_name} telah ${initialData?.id ? "diperbarui" : "ditambahkan"}.`,
+        })
+        onSubmit(response.data as Customer)
+        onOpenChange(false)
+      } else {
+        throw new Error(response.message || "Terjadi kesalahan")
+      }
     } catch (error) {
       console.error("Error submitting form:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan pelanggan",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -109,11 +119,11 @@ export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: Cust
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nama Lengkap</Label>
+              <Label htmlFor="customer_name">Nama Lengkap</Label>
               <Input
-                id="name"
-                name="name"
-                value={formData.name}
+                id="customer_name"
+                name="customer_name"
+                value={formData.customer_name}
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap"
                 required
@@ -129,44 +139,28 @@ export function CustomerForm({ open, onOpenChange, initialData, onSubmit }: Cust
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="email@example.com"
-                  required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone">Nomor Telepon</Label>
+                <Label htmlFor="phone_number">Nomor Telepon</Label>
                 <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  id="phone_number"
+                  name="phone_number"
+                  value={formData.phone_number}
                   onChange={handleChange}
                   placeholder="08xxxxxxxxxx"
-                  required
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="address">Alamat</Label>
-              <Textarea
-                id="address"
-                name="address"
-                value={formData.address}
+              <Label htmlFor="identity_number">Nomor Identitas (KTP/SIM)</Label>
+              <Input
+                id="identity_number"
+                name="identity_number"
+                value={formData.identity_number}
                 onChange={handleChange}
-                placeholder="Masukkan alamat lengkap"
-                rows={3}
-                required
+                placeholder="Masukkan nomor identitas"
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aktif">Aktif</SelectItem>
-                  <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>

@@ -11,15 +11,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { TablePagination } from "@/components/table-pagination"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Container } from "@/components/ui/container"
 import { DialogProvider, useDialog } from "@/components/dialog-context"
 import { ItemDetail } from "@/components/item-detail"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { ItemForm } from "@/components/forms/item-form"
+import { getCategories, getItems, deleteItem } from "@/lib/data"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
 interface Category {
   id: number
@@ -65,13 +65,9 @@ function ItemsPageContent() {
     fetchItems()
   }, [searchQuery, categoryFilter])
 
-  const fetchCategories = async () => {
+  const fetchCategories = () => {
     try {
-      const response = await fetch("/api/categories")
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories")
-      }
-      const data = await response.json()
+      const data = getCategories()
       setCategories(data)
     } catch (error) {
       console.error("Error fetching categories:", error)
@@ -83,19 +79,11 @@ function ItemsPageContent() {
     }
   }
 
-  const fetchItems = async () => {
+  const fetchItems = () => {
     setIsLoading(true)
     try {
-      // Build query parameters
-      const params = new URLSearchParams()
-      if (searchQuery) params.append("search", searchQuery)
-      if (categoryFilter !== "all") params.append("category", categoryFilter)
-
-      const response = await fetch(`/api/items?${params.toString()}`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch items")
-      }
-      const data = await response.json()
+      const categoryId = categoryFilter !== "all" ? Number(categoryFilter) : undefined
+      const data = getItems(searchQuery, categoryId)
       setItems(data)
       setTotalItems(data.length)
     } catch (error) {
@@ -133,13 +121,11 @@ function ItemsPageContent() {
   const handleDeleteItem = (item: Item) => {
     setDialogData({
       itemName: item.name,
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
-          const response = await fetch(`/api/items/${item.id}`, {
-            method: "DELETE",
-          })
+          const success = deleteItem(item.id)
 
-          if (!response.ok) {
+          if (!success) {
             throw new Error("Failed to delete item")
           }
 
@@ -164,7 +150,7 @@ function ItemsPageContent() {
     openDialog("delete-confirmation")
   }
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = () => {
     // Refresh the items list after form submission
     fetchItems()
   }
@@ -192,10 +178,10 @@ function ItemsPageContent() {
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Barang</h1>
@@ -335,7 +321,7 @@ function ItemsPageContent() {
               />
             </CardContent>
           </Card>
-        </Container>
+        </div>
       </main>
 
       {/* Render all dialogs */}

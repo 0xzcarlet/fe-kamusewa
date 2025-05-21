@@ -16,12 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
-import { cn } from "@/lib/utils"
 
 interface RentalFormProps {
   open: boolean
@@ -38,17 +32,33 @@ interface RentalFormProps {
   onSubmit: (data: any) => void
 }
 
+// Format date to YYYY-MM-DD
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+// Format date for display
+function formatDateForDisplay(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString("id-ID", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
 export function RentalForm({ open, onOpenChange, initialData, onSubmit }: RentalFormProps) {
   const [formData, setFormData] = useState({
     customer: "",
     items: [] as string[],
-    startDate: format(new Date(), "yyyy-MM-dd"),
-    endDate: format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+    startDate: formatDateToYYYYMMDD(new Date()),
+    endDate: formatDateToYYYYMMDD(new Date(Date.now() + 86400000)), // Tomorrow
     totalAmount: 0,
     status: "Menunggu Pengambilan",
   })
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date())
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date(Date.now() + 86400000))
   const [isLoading, setIsLoading] = useState(false)
 
   // Reset form data when initialData changes or dialog opens
@@ -58,25 +68,21 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
         setFormData({
           customer: initialData.customer || "",
           items: initialData.items || [],
-          startDate: initialData.startDate || format(new Date(), "yyyy-MM-dd"),
-          endDate: initialData.endDate || format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+          startDate: initialData.startDate || formatDateToYYYYMMDD(new Date()),
+          endDate: initialData.endDate || formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
           totalAmount: initialData.totalAmount || 0,
           status: initialData.status || "Menunggu Pengambilan",
         })
-        setStartDate(initialData.startDate ? new Date(initialData.startDate) : new Date())
-        setEndDate(initialData.endDate ? new Date(initialData.endDate) : new Date(Date.now() + 86400000))
       } else {
         // Reset form for new rental
         setFormData({
           customer: "",
           items: [],
-          startDate: format(new Date(), "yyyy-MM-dd"),
-          endDate: format(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
+          startDate: formatDateToYYYYMMDD(new Date()),
+          endDate: formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
           totalAmount: 0,
           status: "Menunggu Pengambilan",
         })
-        setStartDate(new Date())
-        setEndDate(new Date(Date.now() + 86400000))
       }
     }
   }, [initialData, open])
@@ -102,24 +108,11 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
     }
   }
 
-  const handleStartDateChange = (date: Date | undefined) => {
-    if (date) {
-      setStartDate(date)
-      setFormData((prev) => ({
-        ...prev,
-        startDate: format(date, "yyyy-MM-dd"),
-      }))
-    }
-  }
-
-  const handleEndDateChange = (date: Date | undefined) => {
-    if (date) {
-      setEndDate(date)
-      setFormData((prev) => ({
-        ...prev,
-        endDate: format(date, "yyyy-MM-dd"),
-      }))
-    }
+  const handleDateChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -213,47 +206,31 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label>Tanggal Mulai</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !startDate && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP", { locale: id }) : "Pilih tanggal"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={startDate} onSelect={handleStartDateChange} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="startDate">Tanggal Mulai</Label>
+                <div className="relative">
+                  <Input
+                    id="startDate"
+                    name="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleDateChange("startDate", e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
-                <Label>Tanggal Selesai</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP", { locale: id }) : "Pilih tanggal"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={handleEndDateChange}
-                      initialFocus
-                      disabled={(date) => date < (startDate || new Date())}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="endDate">Tanggal Selesai</Label>
+                <div className="relative">
+                  <Input
+                    id="endDate"
+                    name="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleDateChange("endDate", e.target.value)}
+                    className="w-full"
+                    min={formData.startDate}
+                  />
+                </div>
               </div>
             </div>
             <div className="grid gap-2">

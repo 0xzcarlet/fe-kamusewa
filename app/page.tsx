@@ -1,18 +1,25 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, CheckCircle, Package, Search, ShieldCheck } from "lucide-react"
+import { ArrowRight, CheckCircle, Package, Search, ShieldCheck, Menu, X } from "lucide-react"
 import { Container } from "@/components/ui/container"
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="h-16 flex items-center border-b">
-        <Container className="flex w-full items-center">
+      <header className="h-16 flex items-center border-b sticky top-0 bg-background z-10">
+        <Container className="flex w-full items-center justify-between">
           <Link href="/" className="flex items-center justify-center">
             <Package className="h-6 w-6 mr-2" />
             <span className="font-bold text-xl">KamuSewa</span>
           </Link>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex gap-4 sm:gap-6">
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
               Fitur
             </Link>
@@ -26,8 +33,53 @@ export default function LandingPage() {
               Daftar
             </Link>
           </nav>
+
+          {/* Mobile Menu Button */}
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="sr-only">Toggle menu</span>
+          </Button>
         </Container>
       </header>
+
+      {/* Mobile Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-b bg-background">
+          <Container className="py-4">
+            <nav className="flex flex-col gap-4">
+              <Link
+                href="#features"
+                className="text-sm font-medium hover:underline underline-offset-4"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Fitur
+              </Link>
+              <Link
+                href="#about"
+                className="text-sm font-medium hover:underline underline-offset-4"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Tentang Kami
+              </Link>
+              <Link
+                href="/login"
+                className="text-sm font-medium hover:underline underline-offset-4"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm font-medium hover:underline underline-offset-4"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Daftar
+              </Link>
+            </nav>
+          </Container>
+        </div>
+      )}
+
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
           <Container>

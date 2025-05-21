@@ -1,14 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Users, ShoppingBag, Calendar, FolderTree, AlertCircle, Clock } from "lucide-react"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { Container } from "@/components/ui/container"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="grid gap-6">
             <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -174,7 +173,7 @@ export default function DashboardPage() {
               </Card>
             </div>
           </div>
-        </Container>
+        </div>
       </main>
     </div>
   )

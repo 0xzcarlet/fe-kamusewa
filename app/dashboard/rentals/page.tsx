@@ -22,8 +22,25 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
 import { RentalForm } from "@/components/forms/rental-form"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { Container } from "@/components/ui/container"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
+
+// Simple date formatter function to replace date-fns
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString("id-ID", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
+
+// Calculate days between two dates
+function calculateDaysBetween(startDate: string, endDate: string): number {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const diffTime = Math.abs(end.getTime() - start.getTime())
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
 
 export default function RentalsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -122,10 +139,10 @@ export default function RentalsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Penyewaan</h1>
@@ -199,17 +216,13 @@ export default function RentalsPage() {
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="text-sm">
-                              {rental.startDate} s/d {rental.endDate}
+                              {formatDate(rental.startDate)} s/d {formatDate(rental.endDate)}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="text-sm">
-                              {Math.ceil(
-                                (new Date(rental.endDate).getTime() - new Date(rental.startDate).getTime()) /
-                                  (1000 * 60 * 60 * 24),
-                              )}{" "}
-                              hari
+                              {calculateDaysBetween(rental.startDate, rental.endDate)} hari
                             </span>
                           </div>
                         </div>
@@ -272,7 +285,7 @@ export default function RentalsPage() {
               </Table>
             </CardContent>
           </Card>
-        </Container>
+        </div>
       </main>
       <RentalForm
         open={isFormOpen}

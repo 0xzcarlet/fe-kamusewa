@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
+import { createCategory, updateCategory } from "@/lib/data"
 
 interface CategoryFormProps {
   open: boolean
@@ -68,20 +69,12 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
     try {
       if (initialData?.id) {
         // Update existing category
-        const response = await fetch(`/api/categories/${initialData.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
+        const updatedCategory = updateCategory(initialData.id, formData)
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Failed to update category")
+        if (!updatedCategory) {
+          throw new Error("Failed to update category")
         }
 
-        const updatedCategory = await response.json()
         toast({
           title: "Kategori berhasil diperbarui",
           description: `Kategori ${updatedCategory.name} telah diperbarui.`,
@@ -89,26 +82,17 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
         onSubmit(updatedCategory)
       } else {
         // Create new category
-        const response = await fetch("/api/categories", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
+        const newCategory = createCategory(formData)
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Failed to create category")
-        }
-
-        const newCategory = await response.json()
         toast({
           title: "Kategori berhasil ditambahkan",
           description: `Kategori ${newCategory.name} telah ditambahkan.`,
         })
         onSubmit(newCategory)
       }
+
+      // Close the dialog
+      onOpenChange(false)
     } catch (error) {
       console.error("Error submitting form:", error)
       toast({

@@ -8,8 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge"
 import { useState } from "react"
 import { CustomerForm } from "@/components/forms/customer-form"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { Container } from "@/components/ui/container"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
 export default function CustomersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -108,10 +107,10 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Pelanggan</h1>
@@ -198,7 +197,7 @@ export default function CustomersPage() {
               </Table>
             </CardContent>
           </Card>
-        </Container>
+        </div>
       </main>
       <CustomerForm
         open={isFormOpen}

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, X, Upload } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { toast } from "@/components/ui/use-toast"
+import { getCategories, createItem, updateItem } from "@/lib/data"
 
 interface Category {
   id: number
@@ -74,14 +75,10 @@ export function ItemForm() {
     }
   }, [initialData, isOpen])
 
-  const fetchCategories = async () => {
+  const fetchCategories = () => {
     setLoadingCategories(true)
     try {
-      const response = await fetch("/api/categories")
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories")
-      }
-      const data = await response.json()
+      const data = getCategories()
       setCategories(data)
     } catch (error) {
       console.error("Error fetching categories:", error)
@@ -137,20 +134,20 @@ export function ItemForm() {
     try {
       if (initialData && initialData.id) {
         // Update existing item
-        const response = await fetch(`/api/items/${initialData.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+        const updatedItem = updateItem(initialData.id, {
+          name: formData.name,
+          category_id: formData.category_id ? Number(formData.category_id) : undefined,
+          price: formData.price,
+          stock: formData.stock,
+          status: formData.status,
+          description: formData.description,
+          image_url: formData.image_url,
         })
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Failed to update item")
+        if (!updatedItem) {
+          throw new Error("Failed to update item")
         }
 
-        const updatedItem = await response.json()
         toast({
           title: "Barang berhasil diperbarui",
           description: `Barang ${updatedItem.name} telah diperbarui.`,
@@ -162,20 +159,16 @@ export function ItemForm() {
         }
       } else {
         // Create new item
-        const response = await fetch("/api/items", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+        const newItem = createItem({
+          name: formData.name,
+          category_id: formData.category_id ? Number(formData.category_id) : 1,
+          price: formData.price,
+          stock: formData.stock,
+          status: formData.status,
+          description: formData.description,
+          image_url: formData.image_url,
         })
 
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || "Failed to create item")
-        }
-
-        const newItem = await response.json()
         toast({
           title: "Barang berhasil ditambahkan",
           description: `Barang ${newItem.name} telah ditambahkan.`,

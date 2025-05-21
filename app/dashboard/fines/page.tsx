@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
 import { FineForm } from "@/components/forms/fine-form"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { Container } from "@/components/ui/container"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
 export default function FinesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -117,10 +116,10 @@ export default function FinesPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Denda</h1>
@@ -229,7 +228,7 @@ export default function FinesPage() {
               </Table>
             </CardContent>
           </Card>
-        </Container>
+        </div>
       </main>
       <FineForm open={isFormOpen} onOpenChange={setIsFormOpen} initialData={editingFine} onSubmit={handleFormSubmit} />
     </div>

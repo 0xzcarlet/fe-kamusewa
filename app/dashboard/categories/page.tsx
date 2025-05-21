@@ -7,20 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState, useEffect } from "react"
 import { CategoryForm } from "@/components/forms/category-form"
-import { ResponsiveNavbar } from "@/components/responsive-navbar"
-import { Container } from "@/components/ui/container"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { useDialog } from "@/components/dialog-context"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
-
-interface Category {
-  id: number
-  name: string
-  description: string
-  created_at: string
-  updated_at: string
-}
+import { getCategories, deleteCategory, type Category } from "@/lib/data"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
 
 export default function CategoriesPage() {
   const { openDialog, setDialogData } = useDialog()
@@ -35,14 +27,10 @@ export default function CategoriesPage() {
     fetchCategories()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchCategories = () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/categories")
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories")
-      }
-      const data = await response.json()
+      const data = getCategories()
       setCategories(data)
     } catch (error) {
       console.error("Error fetching categories:", error)
@@ -69,13 +57,11 @@ export default function CategoriesPage() {
   const handleDeleteCategory = (category: Category) => {
     setDialogData({
       itemName: category.name,
-      onConfirm: async () => {
+      onConfirm: () => {
         try {
-          const response = await fetch(`/api/categories/${category.id}`, {
-            method: "DELETE",
-          })
+          const success = deleteCategory(category.id)
 
-          if (!response.ok) {
+          if (!success) {
             throw new Error("Failed to delete category")
           }
 
@@ -118,10 +104,10 @@ export default function CategoriesPage() {
   )
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <ResponsiveNavbar />
-      <main className="flex-1 p-6 md:p-8">
-        <Container>
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <main className="flex-1 md:ml-64 overflow-auto">
+        <div className="p-6 pt-20 md:pt-6 md:p-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Kategori</h1>
@@ -211,7 +197,7 @@ export default function CategoriesPage() {
               )}
             </CardContent>
           </Card>
-        </Container>
+        </div>
       </main>
       <CategoryForm
         open={isFormOpen}

@@ -16,12 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
-import { cn } from "@/lib/utils"
 
 interface FineFormProps {
   open: boolean
@@ -39,6 +33,14 @@ interface FineFormProps {
   onSubmit: (data: any) => void
 }
 
+// Format date to YYYY-MM-DD
+function formatDateToYYYYMMDD(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineFormProps) {
   const [formData, setFormData] = useState({
     rentalId: 0,
@@ -46,10 +48,9 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
     item: "",
     amount: 0,
     reason: "",
-    date: format(new Date(), "yyyy-MM-dd"),
+    date: formatDateToYYYYMMDD(new Date()),
     status: "Belum Dibayar",
   })
-  const [date, setDate] = useState<Date | undefined>(new Date())
   const [isLoading, setIsLoading] = useState(false)
 
   // Reset form data when initialData changes or dialog opens
@@ -62,10 +63,9 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
           item: initialData.item || "",
           amount: initialData.amount || 0,
           reason: initialData.reason || "",
-          date: initialData.date || format(new Date(), "yyyy-MM-dd"),
+          date: initialData.date || formatDateToYYYYMMDD(new Date()),
           status: initialData.status || "Belum Dibayar",
         })
-        setDate(initialData.date ? new Date(initialData.date) : new Date())
       } else {
         // Reset form for new fine
         setFormData({
@@ -74,10 +74,9 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
           item: "",
           amount: 0,
           reason: "",
-          date: format(new Date(), "yyyy-MM-dd"),
+          date: formatDateToYYYYMMDD(new Date()),
           status: "Belum Dibayar",
         })
-        setDate(new Date())
       }
     }
   }, [initialData, open])
@@ -99,14 +98,11 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setDate(date)
-      setFormData((prev) => ({
-        ...prev,
-        date: format(date, "yyyy-MM-dd"),
-      }))
-    }
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      date: e.target.value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,21 +228,8 @@ export function FineForm({ open, onOpenChange, initialData, onSubmit }: FineForm
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Tanggal</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP", { locale: id }) : "Pilih tanggal"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={date} onSelect={handleDateChange} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                <Label htmlFor="date">Tanggal</Label>
+                <Input id="date" name="date" type="date" value={formData.date} onChange={handleDateChange} required />
               </div>
             </div>
             <div className="grid gap-2">

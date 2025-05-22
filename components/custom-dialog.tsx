@@ -64,7 +64,13 @@ export function CustomDialog({ open, onClose, children, title, description, clas
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
-        onClose()
+        // Check if the click is on a Select component or its children
+        const target = e.target as HTMLElement
+        const isSelectComponent = target.closest('[role="listbox"]') || target.closest('[role="option"]')
+        
+        if (!isSelectComponent) {
+          onClose()
+        }
       }
     }
 

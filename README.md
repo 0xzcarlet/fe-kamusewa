@@ -2,9 +2,10 @@
 
 A modern web application for managing rental businesses, built with Next.js and TypeScript.
 
-![Next.js](https://img.shields.io/badge/Next.js-13.4-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)
 
 ## ✨ Features
 
@@ -57,7 +58,12 @@ pnpm install
 
 3. Create a `.env.local` file in the root directory
 ```env
-NEXT_PUBLIC_API_URL=https://api.ks.kodekosan.com/api
+# API Configuration
+API_URL=https://api.ks.kodekosan.com/api
+
+# Authentication
+NEXT_PUBLIC_AUTH_TOKEN_KEY=auth_token
+NEXT_PUBLIC_USER_KEY=user
 ```
 
 4. Start the development server
@@ -113,10 +119,12 @@ Available services:
 
 ## 🔒 Environment Variables
 
-Create a `.env.local` file with the following variables:
+Create a `.env.local` file in the root directory with the following variables:
 
 ```env
-NEXT_PUBLIC_API_URL=your_api_url
+# API Configuration
+API_URL=your_url_api
+
 ```
 
 ## 🚀 Deployment
@@ -142,8 +150,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@kamusewa.com or join our Slack channel.
+For support, email kodekosan@gmail.com or join our Slack channel.
 
 ---
 
-Made with ❤️ by [Your Name/Team]
+Made with ❤️ by **0xZcarlet** And Team

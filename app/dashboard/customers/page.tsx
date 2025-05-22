@@ -11,7 +11,7 @@ import { CustomerForm } from "@/components/forms/customer-form"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { customerService, type Customer } from "@/lib/api-service"
+import { customerService, type Customer } from "@/lib/api"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { DialogProvider, useDialog } from "@/components/dialog-context"
 

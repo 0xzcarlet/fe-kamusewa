@@ -15,12 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
-import {
-  customerService,
-  type Customer,
-  type CreateCustomerRequest,
-  type UpdateCustomerRequest,
-} from "@/lib/api-service"
+import { customerService, type Customer, type CreateCustomerRequest, type UpdateCustomerRequest } from "@/lib/api"
 
 interface CustomerFormProps {
   open: boolean

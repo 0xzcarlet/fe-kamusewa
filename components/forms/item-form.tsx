@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, X, Upload } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { toast } from "@/components/ui/use-toast"
-import { categoryService, itemService, type Category } from "@/lib/api-service"
+import { categoryService, itemService, type Category } from "@/lib/api"
 
 export function ItemForm() {
   const { activeDialog, closeDialog, dialogData: initialData } = useDialog()

@@ -16,21 +16,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
+import { categoryService, type Category, type CreateCategoryRequest, type UpdateCategoryRequest } from "@/lib/api"
 
 interface CategoryFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialData?: {
-    id?: number
-    name: string
-    description: string
-  }
-  onSubmit: (data: any) => void
+  initialData?: Category
+  onSubmit: (data: Category) => void
 }
 
 export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: CategoryFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
+  const [formData, setFormData] = useState<CreateCategoryRequest | UpdateCategoryRequest>({
+    category_name: "",
     description: "",
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -40,13 +37,13 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
     if (open) {
       if (initialData) {
         setFormData({
-          name: initialData.name || "",
+          category_name: initialData.category_name || "",
           description: initialData.description || "",
         })
       } else {
         // Reset form for new category
         setFormData({
-          name: "",
+          category_name: "",
           description: "",
         })
       }
@@ -66,17 +63,26 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
     setIsLoading(true)
 
     try {
-      await onSubmit(formData)
+      let response
 
-      toast({
-        title: initialData?.id ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan",
-        description: initialData?.id
-          ? `Kategori ${formData.name} telah diperbarui.`
-          : `Kategori ${formData.name} telah ditambahkan.`,
-      })
+      if (initialData?.id) {
+        // Update existing category
+        response = await categoryService.update(initialData.id, formData)
+      } else {
+        // Create new category
+        response = await categoryService.create(formData as CreateCategoryRequest)
+      }
 
-      // Close the dialog
-      onOpenChange(false)
+      if (response.status === "success" && response.data) {
+        toast({
+          title: initialData?.id ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan",
+          description: `${formData.category_name} telah ${initialData?.id ? "diperbarui" : "ditambahkan"}.`,
+        })
+        onSubmit(response.data as Category)
+        onOpenChange(false)
+      } else {
+        throw new Error(response.message || "Terjadi kesalahan")
+      }
     } catch (error) {
       console.error("Error submitting form:", error)
       toast({
@@ -105,11 +111,11 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nama Kategori</Label>
+              <Label htmlFor="category_name">Nama Kategori</Label>
               <Input
-                id="name"
-                name="name"
-                value={formData.name}
+                id="category_name"
+                name="category_name"
+                value={formData.category_name}
                 onChange={handleChange}
                 placeholder="Masukkan nama kategori"
                 required

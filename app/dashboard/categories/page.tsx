@@ -12,7 +12,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useDialog } from "@/components/dialog-context"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { categoryService, type Category } from "@/lib/api-service"
+import { categoryService, type Category } from "@/lib/api"
 
 export default function CategoriesPage() {
   const { openDialog, setDialogData } = useDialog()

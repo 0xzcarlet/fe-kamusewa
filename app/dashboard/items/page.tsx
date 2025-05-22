@@ -19,11 +19,12 @@ import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { ItemForm } from "@/components/forms/item-form"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { itemService, categoryService, type Item, type Category } from "@/lib/api-service"
+import { itemService, categoryService, type Item, type Category } from "@/lib/api"
 
 // Wrap the main content with the dialog provider
 function ItemsPageContent() {
   const { openDialog, setDialogData } = useDialog()
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -343,7 +344,7 @@ function ItemsPageContent() {
       {/* Render all dialogs */}
       <ItemDetail />
       <DeleteConfirmation />
-      <LogoutDialog />
+      <LogoutDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog} />
       <ItemForm />
 
       <Toaster />

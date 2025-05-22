@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Edit, ShoppingBag } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { useEffect, useState } from "react"
-import type { Item } from "@/lib/api-service"
+import type { Item } from "@/lib/api"
 
 export function ItemDetail() {
   const { activeDialog, closeDialog, dialogData: item, openDialog, setDialogData } = useDialog()

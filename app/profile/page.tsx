@@ -15,10 +15,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const { logout } = useAuth()
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +36,11 @@ export default function ProfilePage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsLoading(false)
+  }
+
+  const handleLogout = () => {
+    setShowLogoutDialog(false)
+    logout()
   }
 
   return (
@@ -208,7 +215,10 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-      <LogoutDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog} />
+      <LogoutDialog 
+        open={showLogoutDialog} 
+        onOpenChange={setShowLogoutDialog} 
+      />
     </div>
   )
 }

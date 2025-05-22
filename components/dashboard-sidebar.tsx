@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useDialog } from "@/components/dialog-context"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronDown } from "lucide-react"
+import { LogoutDialog } from "@/components/logout-dialog"
 
 interface NavItem {
   href: string
@@ -24,6 +25,7 @@ export function DashboardSidebar() {
   const { openDialog } = useDialog()
   const [open, setOpen] = useState(false)
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const pathname = usePathname()
 
   // Initialize open submenus based on current path
@@ -82,7 +84,7 @@ export function DashboardSidebar() {
 
   const handleLogout = () => {
     setOpen(false)
-    openDialog("logout")
+    setShowLogoutDialog(true)
   }
 
   const toggleSubmenu = (index: number) => {
@@ -311,13 +313,17 @@ export function DashboardSidebar() {
                 Profil
               </Link>
             </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => openDialog("logout")}>
+            <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Keluar
             </Button>
           </div>
         </div>
       </div>
+      <LogoutDialog 
+        open={showLogoutDialog} 
+        onOpenChange={setShowLogoutDialog} 
+      />
     </>
   )
 }

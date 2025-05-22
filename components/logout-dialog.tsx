@@ -1,37 +1,31 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { CustomDialog } from "@/components/custom-dialog"
 import { Button } from "@/components/ui/button"
-import { useDialog } from "@/components/dialog-context"
 import { useAuth } from "@/lib/auth-context"
 
-export function LogoutDialog() {
-  const router = useRouter()
-  const { activeDialog, closeDialog } = useDialog()
-  const { logout } = useAuth()
-  const isOpen = activeDialog === "logout"
+interface LogoutDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
 
-  if (!isOpen) return null
+export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
+  const { logout } = useAuth()
 
   const handleLogout = () => {
-    closeDialog()
-    // Call the logout function from auth context
-    setTimeout(() => {
-      logout()
-      router.push("/login")
-    }, 300)
+    onOpenChange(false)
+    logout()
   }
 
   return (
     <CustomDialog
-      open={isOpen}
-      onClose={closeDialog}
+      open={open}
+      onClose={() => onOpenChange(false)}
       title="Konfirmasi Keluar"
       description="Apakah Anda yakin ingin keluar dari aplikasi? Semua sesi Anda akan berakhir."
     >
       <div className="flex justify-end gap-2 mt-4">
-        <Button variant="outline" onClick={closeDialog}>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
           Batal
         </Button>
         <Button onClick={handleLogout}>Keluar</Button>

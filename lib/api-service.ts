@@ -180,6 +180,16 @@ const apiRequest = async <T,>(endpoint: string, options: RequestInit = {}): Prom
     const result = await response.json()
 
     if (!response.ok) {
+      // If unauthorized (401), clear auth data and redirect to login
+      if (response.status === 401) {
+        localStorage.removeItem("auth_token")
+        localStorage.removeItem("user")
+        window.location.href = "/login"
+        return {
+          status: "error",
+          message: "Session expired. Please login again.",
+        }
+      }
       return {
         status: "error",
         message: result.message || `Request failed with status ${response.status}`,
@@ -266,9 +276,11 @@ export const authService = {
   },
 
   // Logout user
-  logout() {
+  logout(): void {
+    // Remove auth data from localStorage
     localStorage.removeItem("auth_token")
     localStorage.removeItem("user")
+    window.location.href = "/login"
   },
 
   // Check if user is authenticated

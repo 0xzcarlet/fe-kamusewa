@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { authService } from "./api-service"
+import { authService } from "./api"
 
 interface User {
   id: number

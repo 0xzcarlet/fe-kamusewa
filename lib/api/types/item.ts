@@ -1,4 +1,8 @@
-import { Category } from './category'
+
+export interface ItemCategory {
+  id: number
+  name: string
+}
 
 export interface Item {
   id: number
@@ -10,7 +14,7 @@ export interface Item {
   rental_price: number
   created_at: string
   updated_at: string
-  categories: Category[]
+  category_ids: ItemCategory[]
 }
 
 export interface CreateItemRequest {

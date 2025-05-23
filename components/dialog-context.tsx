@@ -23,28 +23,36 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   // Force cleanup of any lingering elements when dialog changes
   useEffect(() => {
     const cleanup = () => {
-      // Remove any lingering portal elements
-      const portals = document.querySelectorAll("[data-radix-portal]")
-      portals.forEach((portal) => {
-        portal.remove()
-      })
+      // Only cleanup if no dialog is active
+      if (!activeDialog) {
+        // Remove any lingering portal elements
+        const portals = document.querySelectorAll("[data-radix-portal]")
+        portals.forEach((portal) => {
+          if (!portal.contains(document.activeElement)) {
+            portal.remove()
+          }
+        })
 
-      // Remove any lingering overlay elements
-      const overlays = document.querySelectorAll("[role='dialog']")
-      overlays.forEach((overlay) => {
-        if (!overlay.contains(document.activeElement)) {
-          overlay.remove()
-        }
-      })
+        // Remove any lingering overlay elements
+        const overlays = document.querySelectorAll("[role='dialog']")
+        overlays.forEach((overlay) => {
+          if (!overlay.contains(document.activeElement)) {
+            overlay.remove()
+          }
+        })
 
-      // Remove any lingering backdrop elements
-      const backdrops = document.querySelectorAll(".fixed.inset-0.bg-black")
-      backdrops.forEach((backdrop) => {
-        backdrop.remove()
-      })
+        // Remove any lingering backdrop elements
+        const backdrops = document.querySelectorAll(".fixed.inset-0.bg-black")
+        backdrops.forEach((backdrop) => {
+          if (!backdrop.contains(document.activeElement)) {
+            backdrop.remove()
+          }
+        })
 
-      // Reset body styles that might have been set by dialogs
-      document.body.style.pointerEvents = ""
+        // Reset body styles that might have been set by dialogs
+        document.body.style.pointerEvents = ""
+        document.body.style.overflow = ""
+      }
     }
 
     // Clean up when dialog changes
@@ -80,11 +88,13 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     // Prevent closing during transition
     if (isTransitioning) return
 
+    setIsTransitioning(true)
     setActiveDialog(null)
 
     // Clear dialog data after a delay to ensure animations complete
     setTimeout(() => {
       setDialogData(null)
+      setIsTransitioning(false)
     }, 300)
   }
 

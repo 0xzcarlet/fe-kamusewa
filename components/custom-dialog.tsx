@@ -87,6 +87,15 @@ export function CustomDialog({ open, onClose, children, title, description, clas
     return undefined
   }, [open, onClose])
 
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      // Reset body styles when component unmounts
+      document.body.style.overflow = ""
+      document.body.style.pointerEvents = ""
+    }
+  }, [])
+
   if (!open && !isVisible) return null
 
   return (

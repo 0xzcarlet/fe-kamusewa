@@ -32,24 +32,24 @@ export function ItemForm() {
   const [loadingCategories, setLoadingCategories] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch categories
-  useEffect(() => {
-    if (isOpen) {
-      fetchCategories()
-    }
-  }, [isOpen])
-
   // Reset form data when initialData changes or dialog opens
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        console.log('Initial data for edit:', initialData)
+        console.log('Category IDs:', initialData.category_ids)
+        
+        // Get the first category ID if it exists
+        const categoryId = initialData.category_ids?.[0]?.id?.toString() || ""
+        
+        console.log('Selected category ID:', categoryId)
+        
         setFormData({
           item_name: initialData.item_name || "",
-          category_id:
-            initialData.categories && initialData.categories.length > 0 ? initialData.categories[0].id.toString() : "",
+          category_id: categoryId,
           rental_price: initialData.rental_price || 0,
-          total_stock: initialData.total_stock || 1,
-          available_stock: initialData.available_stock || 1,
+          total_stock: initialData.total_stock || 0,
+          available_stock: initialData.available_stock || 0,
           description: initialData.description || "",
         })
         // In a real app, you would set the image from the API
@@ -69,13 +69,29 @@ export function ItemForm() {
     }
   }, [initialData, isOpen])
 
+  // Fetch categories
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories()
+    }
+  }, [isOpen])
+
   const fetchCategories = async () => {
     setLoadingCategories(true)
     try {
       const response = await categoryService.getAll()
 
       if (response.status === "success" && response.data) {
+        console.log('Fetched categories:', response.data)
         setCategories(response.data)
+        
+        // If we're editing and have a category_id but no categories loaded yet,
+        // make sure the category is still selected after categories are loaded
+        if (initialData?.category_ids?.[0]?.id && formData.category_id === "") {
+          const categoryId = initialData.category_ids[0].id.toString()
+          console.log('Setting category ID after categories loaded:', categoryId)
+          setFormData(prev => ({ ...prev, category_id: categoryId }))
+        }
       } else {
         toast({
           title: "Error",
@@ -104,7 +120,9 @@ export function ItemForm() {
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: Number.parseInt(value) || 0 }))
+    // Remove leading zeros and convert to number
+    const numericValue = value === '' ? 0 : Number(value.replace(/^0+/, ''))
+    setFormData((prev) => ({ ...prev, [name]: numericValue }))
   }
 
   const handleSelectChange = (name: string, value: string) => {
@@ -142,9 +160,14 @@ export function ItemForm() {
         category_ids: formData.category_id ? [Number(formData.category_id)] : [],
       }
 
+      console.log('Submitting item data:', itemData)
+      console.log('Selected category_id:', formData.category_id)
+
       if (initialData && initialData.id) {
         // Update existing item
+        console.log('Updating existing item with ID:', initialData.id)
         const response = await itemService.update(initialData.id, itemData)
+        console.log('Update response:', response)
 
         if (response.status !== "success") {
           throw new Error(response.message || "Failed to update item")
@@ -156,7 +179,9 @@ export function ItemForm() {
         })
       } else {
         // Create new item
+        console.log('Creating new item')
         const response = await itemService.create(itemData)
+        console.log('Create response:', response)
 
         if (response.status !== "success") {
           throw new Error(response.message || "Failed to create item")
@@ -235,7 +260,7 @@ export function ItemForm() {
                 id="rental_price"
                 name="rental_price"
                 type="number"
-                value={formData.rental_price}
+                value={formData.rental_price || ''}
                 onChange={handleNumberChange}
                 placeholder="0"
                 min={0}
@@ -248,7 +273,7 @@ export function ItemForm() {
                 id="total_stock"
                 name="total_stock"
                 type="number"
-                value={formData.total_stock}
+                value={formData.total_stock || ''}
                 onChange={handleNumberChange}
                 placeholder="1"
                 min={0}
@@ -262,7 +287,7 @@ export function ItemForm() {
               id="available_stock"
               name="available_stock"
               type="number"
-              value={formData.available_stock}
+              value={formData.available_stock || ''}
               onChange={handleNumberChange}
               placeholder="1"
               min={0}

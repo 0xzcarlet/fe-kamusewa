@@ -33,8 +33,8 @@ export function ItemDetail() {
 
   // Helper function to get category name
   const getCategoryName = () => {
-    if (itemData.categories && itemData.categories.length > 0) {
-      return itemData.categories[0].category_name
+    if (itemData.category_ids && itemData.category_ids.length > 0) {
+      return itemData.category_ids[0].name
     }
     return "Uncategorized"
   }

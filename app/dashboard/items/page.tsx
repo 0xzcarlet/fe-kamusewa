@@ -19,7 +19,7 @@ import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { LogoutDialog } from "@/components/logout-dialog"
 import { ItemForm } from "@/components/forms/item-form"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { itemService, categoryService, type Item, type Category } from "@/lib/api"
+import { itemService, categoryService, type Item, type Category, type ItemCategory } from "@/lib/api"
 
 // Wrap the main content with the dialog provider
 function ItemsPageContent() {
@@ -88,7 +88,7 @@ function ItemsPageContent() {
 
         if (categoryFilter !== "all") {
           const categoryId = Number(categoryFilter)
-          filteredItems = filteredItems.filter((item) => item.categories.some((cat) => cat.id === categoryId))
+          filteredItems = filteredItems.filter((item) => item.category_ids.some((cat: ItemCategory) => cat.id === categoryId))
         }
 
         setItems(filteredItems)
@@ -120,6 +120,8 @@ function ItemsPageContent() {
   }
 
   const handleEditItem = (item: Item) => {
+    console.log('Editing item:', item)
+    console.log('Item category_ids:', item.category_ids)
     setDialogData({
       ...item,
       onSubmit: handleFormSubmit,
@@ -193,8 +195,8 @@ function ItemsPageContent() {
 
   // Helper function to get category name from an item
   const getCategoryName = (item: Item) => {
-    if (item.categories && item.categories.length > 0) {
-      return item.categories[0].category_name
+    if (item.category_ids && item.category_ids.length > 0) {
+      return item.category_ids[0].name
     }
     return "Uncategorized"
   }

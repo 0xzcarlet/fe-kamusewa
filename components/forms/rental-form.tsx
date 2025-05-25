@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,21 +15,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-
-interface RentalFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  initialData?: {
-    id?: number
-    customer: string
-    items: string[]
-    startDate: string
-    endDate: string
-    totalAmount: number
-    status: string
-  }
-  onSubmit: (data: any) => void
-}
+import { customerService } from "@/lib/api/services/customer.service"
+import { itemService } from "@/lib/api/services/item.service"
+import { rentalService } from "@/lib/api/services/rental.service"
+import { Customer } from "@/lib/api/types/customer"
+import { Item } from "@/lib/api/types/item"
+import { Rental } from "@/lib/api/types/rental"
+import { useToast } from "@/components/ui/use-toast"
+import { useDialog } from "@/components/dialog-context"
 
 // Format date to YYYY-MM-DD
 function formatDateToYYYYMMDD(date: Date): string {
@@ -50,62 +42,94 @@ function formatDateForDisplay(dateString: string): string {
   })
 }
 
-export function RentalForm({ open, onOpenChange, initialData, onSubmit }: RentalFormProps) {
-  const [formData, setFormData] = useState({
-    customer: "",
-    items: [] as string[],
-    startDate: formatDateToYYYYMMDD(new Date()),
-    endDate: formatDateToYYYYMMDD(new Date(Date.now() + 86400000)), // Tomorrow
-    totalAmount: 0,
-    status: "Menunggu Pengambilan",
-  })
-  const [isLoading, setIsLoading] = useState(false)
+const initialFormData = {
+  customer_id: 0,
+  start_date: formatDateToYYYYMMDD(new Date()),
+  end_date: formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
+  title: "",
+  items: [] as { item_id: number; quantity: number }[],
+}
 
-  // Reset form data when initialData changes or dialog opens
+export function RentalForm() {
+  const { closeDialog, dialogData, activeDialog } = useDialog()
+  const [formData, setFormData] = useState(initialFormData)
+  const [isLoading, setIsLoading] = useState(false)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [items, setItems] = useState<Item[]>([])
+  const { toast } = useToast()
+
+  // Fetch data when dialog becomes active
   useEffect(() => {
-    if (open) {
-      if (initialData) {
-        setFormData({
-          customer: initialData.customer || "",
-          items: initialData.items || [],
-          startDate: initialData.startDate || formatDateToYYYYMMDD(new Date()),
-          endDate: initialData.endDate || formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
-          totalAmount: initialData.totalAmount || 0,
-          status: initialData.status || "Menunggu Pengambilan",
-        })
-      } else {
-        // Reset form for new rental
-        setFormData({
-          customer: "",
-          items: [],
-          startDate: formatDateToYYYYMMDD(new Date()),
-          endDate: formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
-          totalAmount: 0,
-          status: "Menunggu Pengambilan",
+    const fetchData = async () => {
+      try {
+        const [customersResponse, itemsResponse] = await Promise.all([
+          customerService.getAll(),
+          itemService.getAll()
+        ])
+        
+        if (customersResponse.data) {
+          setCustomers(customersResponse.data)
+        }
+        if (itemsResponse.data) {
+          setItems(itemsResponse.data)
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch data. Please try again.",
+          variant: "destructive",
         })
       }
     }
-  }, [initialData, open])
 
-  // Return null when not open to ensure proper cleanup
-  if (!open) return null
+    if (activeDialog === "rental-form") {
+      fetchData()
+    }
+  }, [activeDialog, toast])
+
+  // Update form data when dialog data changes
+  useEffect(() => {
+    if (dialogData) {
+      setFormData({
+        customer_id: dialogData.customer_id || 0,
+        start_date: dialogData.start_date || formatDateToYYYYMMDD(new Date()),
+        end_date: dialogData.end_date || formatDateToYYYYMMDD(new Date(Date.now() + 86400000)),
+        title: dialogData.title || "",
+        items: dialogData.rental_items?.map(item => ({
+          item_id: item.item_id,
+          quantity: item.quantity
+        })) || []
+      })
+    } else {
+      setFormData(initialFormData)
+    }
+  }, [dialogData])
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleItemToggle = (item: string, checked: boolean) => {
+  const handleItemToggle = (itemId: number, checked: boolean) => {
     if (checked) {
       setFormData((prev) => ({
         ...prev,
-        items: [...prev.items, item],
+        items: [...prev.items, { item_id: itemId, quantity: 1 }],
       }))
     } else {
       setFormData((prev) => ({
         ...prev,
-        items: prev.items.filter((i) => i !== item),
+        items: prev.items.filter((i) => i.item_id !== itemId),
       }))
     }
+  }
+
+  const handleQuantityChange = (itemId: number, quantity: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.map((item) =>
+        item.item_id === itemId ? { ...item, quantity } : item
+      ),
+    }))
   }
 
   const handleDateChange = (name: string, value: string) => {
@@ -120,46 +144,47 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      onSubmit({
-        ...formData,
-        id: initialData?.id,
-      })
+      if (dialogData?.id) {
+        await rentalService.update(dialogData.id, formData)
+        toast({
+          title: "Success",
+          description: "Rental updated successfully",
+        })
+      } else {
+        await rentalService.create(formData)
+        toast({
+          title: "Success",
+          description: "Rental created successfully",
+        })
+      }
+      if (dialogData?.onSubmit) {
+        await dialogData.onSubmit()
+      }
+      closeDialog()
     } catch (error) {
-      console.error("Error submitting form:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save rental. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const isEditing = !!initialData?.id
+  const handleClose = () => {
+    setFormData(initialFormData)
+    closeDialog()
+  }
 
-  // Sample data for dropdowns
-  const customers = [
-    "Budi Santoso",
-    "Siti Rahayu",
-    "Ahmad Hidayat",
-    "Dewi Lestari",
-    "Eko Prasetyo",
-    "Rina Wijaya",
-    "Doni Kusuma",
-    "Maya Sari",
-  ]
+  const isEditing = !!dialogData?.id
 
-  const availableItems = [
-    "Kamera Sony A7III",
-    "Sound System 500W",
-    "Proyektor Epson",
-    "Laptop MacBook Pro",
-    "Drone DJI Mavic",
-    "Lensa Canon 24-70mm",
-    "Tripod Manfrotto",
-    "LED Light Panel",
-  ]
+  if (activeDialog !== "rental-form") {
+    return null
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={true} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -171,35 +196,62 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="customer">Pelanggan</Label>
-              <Select value={formData.customer} onValueChange={(value) => handleSelectChange("customer", value)}>
+              <Select 
+                value={formData.customer_id.toString()} 
+                onValueChange={(value) => handleSelectChange("customer_id", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih pelanggan" />
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map((customer) => (
-                    <SelectItem key={customer} value={customer}>
-                      {customer}
+                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                      {customer.customer_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="title">Judul Penyewaan</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => handleSelectChange("title", e.target.value)}
+                placeholder="Contoh: Sewa Kamera Wedding"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
               <Label>Barang yang Disewa</Label>
               <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-40 overflow-y-auto">
-                {availableItems.map((item) => (
-                  <div key={item} className="flex items-center space-x-2">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`item-${item}`}
-                      checked={formData.items.includes(item)}
-                      onCheckedChange={(checked) => handleItemToggle(item, checked as boolean)}
+                      id={`item-${item.id}`}
+                      checked={formData.items.some(i => i.item_id === item.id)}
+                      onCheckedChange={(checked) => handleItemToggle(item.id, checked as boolean)}
                     />
-                    <label
-                      htmlFor={`item-${item}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {item}
-                    </label>
+                    <div className="flex-1">
+                      <label
+                        htmlFor={`item-${item.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {item.item_name}
+                      </label>
+                      {formData.items.some(i => i.item_id === item.id) && (
+                        <div className="mt-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={item.available_stock}
+                            value={formData.items.find(i => i.item_id === item.id)?.quantity || 1}
+                            onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
+                            className="h-7 w-20"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -210,11 +262,10 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
                 <div className="relative">
                   <Input
                     id="startDate"
-                    name="startDate"
                     type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleDateChange("startDate", e.target.value)}
-                    className="w-full"
+                    value={formData.start_date}
+                    onChange={(e) => handleDateChange("start_date", e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -223,52 +274,21 @@ export function RentalForm({ open, onOpenChange, initialData, onSubmit }: Rental
                 <div className="relative">
                   <Input
                     id="endDate"
-                    name="endDate"
                     type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleDateChange("endDate", e.target.value)}
-                    className="w-full"
-                    min={formData.startDate}
+                    value={formData.end_date}
+                    onChange={(e) => handleDateChange("end_date", e.target.value)}
+                    required
                   />
                 </div>
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="totalAmount">Total Biaya (Rp)</Label>
-              <Input
-                id="totalAmount"
-                name="totalAmount"
-                type="number"
-                value={formData.totalAmount}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, totalAmount: Number.parseInt(e.target.value) || 0 }))
-                }
-                placeholder="0"
-                min={0}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Menunggu Pengambilan">Menunggu Pengambilan</SelectItem>
-                  <SelectItem value="Aktif">Aktif</SelectItem>
-                  <SelectItem value="Selesai">Selesai</SelectItem>
-                  <SelectItem value="Dibatalkan">Dibatalkan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Batal
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Tambah Penyewaan"}
+              {isLoading ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Buat Penyewaan"}
             </Button>
           </DialogFooter>
         </form>

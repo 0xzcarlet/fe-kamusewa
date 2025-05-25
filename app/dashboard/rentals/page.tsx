@@ -20,9 +20,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { RentalForm } from "@/components/forms/rental-form"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { rentalService } from "@/lib/api/services/rental.service"
+import { Rental } from "@/lib/api/types/rental"
+import { useToast } from "@/components/ui/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
+import { DialogProvider, useDialog } from "@/components/dialog-context"
 
 // Simple date formatter function to replace date-fns
 function formatDate(dateString: string): string {
@@ -42,101 +47,81 @@ function calculateDaysBetween(startDate: string, endDate: string): number {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
-export default function RentalsPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingRental, setEditingRental] = useState<any>(null)
+function RentalsPageContent() {
+  const { openDialog, setDialogData } = useDialog()
+  const [rentals, setRentals] = useState<Rental[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const { toast } = useToast()
 
-  // Sample data for rentals
-  const rentals = [
-    {
-      id: 1001,
-      customer: "Budi Santoso",
-      items: ["Kamera Sony A7III", "Tripod Manfrotto"],
-      startDate: "2023-05-10",
-      endDate: "2023-05-15",
-      totalAmount: 1250000,
-      status: "Selesai",
-    },
-    {
-      id: 1002,
-      customer: "Siti Rahayu",
-      items: ["Sound System 500W"],
-      startDate: "2023-05-12",
-      endDate: "2023-05-14",
-      totalAmount: 1000000,
-      status: "Selesai",
-    },
-    {
-      id: 1003,
-      customer: "Ahmad Hidayat",
-      items: ["Proyektor Epson"],
-      startDate: "2023-05-15",
-      endDate: "2023-05-18",
-      totalAmount: 600000,
-      status: "Selesai",
-    },
-    {
-      id: 1004,
-      customer: "Dewi Lestari",
-      items: ["Laptop MacBook Pro"],
-      startDate: "2023-05-18",
-      endDate: "2023-05-25",
-      totalAmount: 2450000,
-      status: "Aktif",
-    },
-    {
-      id: 1005,
-      customer: "Eko Prasetyo",
-      items: ["Sound System 500W", "LED Light Panel", "Tripod Manfrotto"],
-      startDate: "2023-05-20",
-      endDate: "2023-05-27",
-      totalAmount: 4750000,
-      status: "Aktif",
-    },
-    {
-      id: 1006,
-      customer: "Rina Wijaya",
-      items: ["Kamera Sony A7III", "Lensa Canon 24-70mm"],
-      startDate: "2023-05-22",
-      endDate: "2023-05-24",
-      totalAmount: 800000,
-      status: "Dibatalkan",
-    },
-    {
-      id: 1007,
-      customer: "Doni Kusuma",
-      items: ["Laptop MacBook Pro"],
-      startDate: "2023-05-25",
-      endDate: "2023-06-01",
-      totalAmount: 2450000,
-      status: "Aktif",
-    },
-    {
-      id: 1008,
-      customer: "Maya Sari",
-      items: ["Drone DJI Mavic"],
-      startDate: "2023-05-28",
-      endDate: "2023-05-30",
-      totalAmount: 900000,
-      status: "Menunggu Pengambilan",
-    },
-  ]
+  useEffect(() => {
+    fetchRentals()
+  }, [])
+
+  const fetchRentals = async () => {
+    try {
+      setIsLoading(true)
+      const response = await rentalService.getAll()
+      if (response.data) {
+        setRentals(response.data)
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch rentals. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleAddRental = () => {
-    setEditingRental(null)
-    setIsFormOpen(true)
+    setDialogData({
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("rental-form")
   }
 
-  const handleEditRental = (rental: any) => {
-    setEditingRental(rental)
-    setIsFormOpen(true)
+  const handleEditRental = (rental: Rental) => {
+    setDialogData({
+      ...rental,
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("rental-form")
   }
 
-  const handleFormSubmit = (data: any) => {
-    console.log("Form submitted:", data)
-    // Here you would typically save the data to your backend
-    setIsFormOpen(false)
+  const handleFormSubmit = async () => {
+    await fetchRentals()
   }
+
+  const handleStatusUpdate = async (id: number, status: number) => {
+    try {
+      await rentalService.updateStatus(id, { status })
+      toast({
+        title: "Success",
+        description: "Rental status updated successfully",
+      })
+      await fetchRentals()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredRentals = rentals.filter((rental) => {
+    const matchesSearch = rental.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rental.rental_number.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && rental.status === 1) ||
+      (statusFilter === "completed" && rental.status === 2) ||
+      (statusFilter === "overdue" && rental.status === 3)
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <div className="flex min-h-screen">
@@ -160,29 +145,37 @@ export default function RentalsPage() {
                 <div className="flex items-center gap-2">
                   <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input type="search" placeholder="Cari penyewaan..." className="w-full bg-background pl-8" />
+                    <Input 
+                      type="search" 
+                      placeholder="Cari penyewaan..." 
+                      className="w-full bg-background pl-8"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
-                  <Select defaultValue="all">
+                  <Select 
+                    value={statusFilter} 
+                    onValueChange={setStatusFilter}
+                  >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Filter Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua Status</SelectItem>
                       <SelectItem value="active">Aktif</SelectItem>
-                      <SelectItem value="waiting">Menunggu Pengambilan</SelectItem>
                       <SelectItem value="completed">Selesai</SelectItem>
-                      <SelectItem value="canceled">Dibatalkan</SelectItem>
+                      <SelectItem value="overdue">Terlambat</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <CardDescription>Total {rentals.length} penyewaan tercatat</CardDescription>
+              <CardDescription>Total {filteredRentals.length} penyewaan tercatat</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
+                    <TableHead className="w-[80px]">No</TableHead>
                     <TableHead>Pelanggan</TableHead>
                     <TableHead>Barang</TableHead>
                     <TableHead>Periode</TableHead>
@@ -192,107 +185,109 @@ export default function RentalsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rentals.map((rental) => (
-                    <TableRow key={rental.id}>
-                      <TableCell className="font-medium">{rental.id}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          {rental.customer}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {rental.items.map((item, index) => (
-                            <div key={index} className="flex items-center gap-1">
-                              <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-sm">{item}</span>
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <TableRow key={index}>
+                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    filteredRentals.map((rental, index) => (
+                      <TableRow key={rental.id}>
+                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            {rental.customer_name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {rental.rental_items.map((item, index) => (
+                              <div key={index} className="flex items-center gap-1">
+                                <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-sm">{item.item_name} ({item.quantity}x)</span>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-sm">
+                                {formatDate(rental.start_date)} s/d {formatDate(rental.end_date)}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm">
-                              {formatDate(rental.startDate)} s/d {formatDate(rental.endDate)}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-sm">
+                                {calculateDaysBetween(rental.start_date, rental.end_date)} hari
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm">
-                              {calculateDaysBetween(rental.startDate, rental.endDate)} hari
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">Rp {rental.totalAmount.toLocaleString("id-ID")}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            rental.status === "Aktif"
-                              ? "default"
-                              : rental.status === "Selesai"
-                                ? "success"
-                                : rental.status === "Dibatalkan"
-                                  ? "destructive"
-                                  : "secondary"
-                          }
-                        >
-                          {rental.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Aksi</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" /> Detail
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" /> Cetak Invoice
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditRental(rental)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            {rental.status === "Aktif" && (
-                              <DropdownMenuItem>
-                                <CheckCircle className="mr-2 h-4 w-4" /> Tandai Selesai
+                        </TableCell>
+                        <TableCell className="font-medium">Rp {rental.total_cost.toLocaleString("id-ID")}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              rental.status === 1
+                                ? "default"
+                                : rental.status === 2
+                                  ? "success"
+                                  : "destructive"
+                            }
+                          >
+                            {rental.status === 1 ? "Aktif" : rental.status === 2 ? "Selesai" : "Terlambat"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditRental(rental)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Edit
                               </DropdownMenuItem>
-                            )}
-                            {rental.status === "Menunggu Pengambilan" && (
-                              <DropdownMenuItem>
-                                <CheckCircle className="mr-2 h-4 w-4" /> Konfirmasi Pengambilan
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(rental.id, 2)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Selesai
                               </DropdownMenuItem>
-                            )}
-                            {(rental.status === "Menunggu Pengambilan" || rental.status === "Aktif") && (
-                              <DropdownMenuItem className="text-destructive">
-                                <XCircle className="mr-2 h-4 w-4" /> Batalkan
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(rental.id, 3)}>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Terlambat
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </div>
       </main>
-      <RentalForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        initialData={editingRental}
-        onSubmit={handleFormSubmit}
-      />
+      <RentalForm />
     </div>
+  )
+}
+
+export default function RentalsPage() {
+  return (
+    <DialogProvider>
+      <RentalsPageContent />
+    </DialogProvider>
   )
 }

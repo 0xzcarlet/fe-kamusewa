@@ -4,28 +4,18 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { CustomDialog } from "@/components/custom-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { categoryService, type Category, type CreateCategoryRequest, type UpdateCategoryRequest } from "@/lib/api"
+import { useDialog } from "@/components/dialog-context"
 
-interface CategoryFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  initialData?: Category
-  onSubmit: (data: Category) => void
-}
+export function CategoryForm() {
+  const { activeDialog, closeDialog, dialogData: initialData } = useDialog()
+  const isOpen = activeDialog === "category-form"
 
-export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: CategoryFormProps) {
   const [formData, setFormData] = useState<CreateCategoryRequest | UpdateCategoryRequest>({
     category_name: "",
     description: "",
@@ -34,7 +24,7 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
 
   // Reset form data when initialData changes or dialog opens
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       if (initialData) {
         setFormData({
           category_name: initialData.category_name || "",
@@ -47,11 +37,15 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
           description: "",
         })
       }
+    } else {
+      // Reset form when dialog closes
+      setFormData({
+        category_name: "",
+        description: "",
+      })
+      setIsLoading(false)
     }
-  }, [initialData, open])
-
-  // Return null when not open to ensure proper cleanup
-  if (!open) return null
+  }, [initialData, isOpen])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -78,8 +72,13 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
           title: initialData?.id ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan",
           description: `${formData.category_name} telah ${initialData?.id ? "diperbarui" : "ditambahkan"}.`,
         })
-        onSubmit(response.data as Category)
-        onOpenChange(false)
+        
+        // Call the onSubmit callback if provided
+        if (initialData?.onSubmit) {
+          initialData.onSubmit()
+        }
+        
+        closeDialog()
       } else {
         throw new Error(response.message || "Terjadi kesalahan")
       }
@@ -98,51 +97,47 @@ export function CategoryForm({ open, onOpenChange, initialData, onSubmit }: Cate
   const isEditing = !!initialData?.id
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Kategori" : "Tambah Kategori Baru"}</DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? "Ubah informasi kategori yang sudah ada"
-                : "Tambahkan kategori baru untuk barang yang disewakan"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="category_name">Nama Kategori</Label>
-              <Input
-                id="category_name"
-                name="category_name"
-                value={formData.category_name}
-                onChange={handleChange}
-                placeholder="Masukkan nama kategori"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Deskripsi</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Masukkan deskripsi kategori"
-                rows={3}
-              />
-            </div>
+    <CustomDialog
+      open={isOpen}
+      onClose={closeDialog}
+      title={isEditing ? "Edit Kategori" : "Tambah Kategori Baru"}
+      description={isEditing ? "Ubah informasi kategori yang sudah ada" : "Tambahkan kategori baru untuk barang yang disewakan"}
+      className="sm:max-w-[425px]"
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="category_name">Nama Kategori</Label>
+            <Input
+              id="category_name"
+              name="category_name"
+              value={formData.category_name}
+              onChange={handleChange}
+              placeholder="Masukkan nama kategori"
+              required
+            />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Batal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Tambah Kategori"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Deskripsi</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Masukkan deskripsi kategori"
+              rows={3}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={closeDialog}>
+            Batal
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Tambah Kategori"}
+          </Button>
+        </div>
+      </form>
+    </CustomDialog>
   )
 }

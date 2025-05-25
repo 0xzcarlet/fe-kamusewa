@@ -9,15 +9,15 @@ import { useState, useEffect } from "react"
 import { CategoryForm } from "@/components/forms/category-form"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { useDialog } from "@/components/dialog-context"
+import { DialogProvider, useDialog } from "@/components/dialog-context"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { categoryService, type Category } from "@/lib/api"
+import { CustomDialog } from "@/components/custom-dialog"
 
-export default function CategoriesPage() {
+// Wrap the main content with the dialog provider
+function CategoriesPageContent() {
   const { openDialog, setDialogData } = useDialog()
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -54,13 +54,18 @@ export default function CategoriesPage() {
   }
 
   const handleAddCategory = () => {
-    setEditingCategory(null)
-    setIsFormOpen(true)
+    setDialogData({
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("category-form")
   }
 
   const handleEditCategory = (category: Category) => {
-    setEditingCategory(category)
-    setIsFormOpen(true)
+    setDialogData({
+      ...category,
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("category-form")
   }
 
   const handleDeleteCategory = (category: Category) => {
@@ -94,29 +99,9 @@ export default function CategoriesPage() {
     openDialog("delete-confirmation")
   }
 
-  const handleFormSubmit = async (data: any) => {
-    if (editingCategory) {
-      // Update existing category in the state
-      const updatedCategory = await categoryService.update(editingCategory.id, {
-        category_name: data.name,
-        description: data.description,
-      })
-
-      if (updatedCategory.status === "success" && updatedCategory.data) {
-        setCategories((prev) => prev.map((c) => (c.id === updatedCategory.data.id ? updatedCategory.data : c)))
-      }
-    } else {
-      // Add new category to the state
-      const newCategory = await categoryService.create({
-        category_name: data.name,
-        description: data.description,
-      })
-
-      if (newCategory.status === "success" && newCategory.data) {
-        setCategories((prev) => [...prev, newCategory.data])
-      }
-    }
-    setIsFormOpen(false)
+  const handleFormSubmit = () => {
+    // Refresh the categories list after form submission
+    fetchCategories()
   }
 
   // Filter categories based on search query
@@ -223,22 +208,20 @@ export default function CategoriesPage() {
           </Card>
         </div>
       </main>
-      <CategoryForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        initialData={
-          editingCategory
-            ? {
-                id: editingCategory.id,
-                name: editingCategory.category_name,
-                description: editingCategory.description,
-              }
-            : undefined
-        }
-        onSubmit={handleFormSubmit}
-      />
+
+      {/* Render all dialogs */}
       <DeleteConfirmation />
+      <CategoryForm />
       <Toaster />
     </div>
+  )
+}
+
+// Wrap the page with the dialog provider
+export default function CategoriesPage() {
+  return (
+    <DialogProvider>
+      <CategoriesPageContent />
+    </DialogProvider>
   )
 }

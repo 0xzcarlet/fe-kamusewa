@@ -13,6 +13,11 @@ import { ImagePlus, X, Upload } from "lucide-react"
 import { useDialog } from "@/components/dialog-context"
 import { toast } from "@/components/ui/use-toast"
 import { categoryService, itemService, type Category } from "@/lib/api"
+import { Badge } from "@/components/ui/badge"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function ItemForm() {
   const { activeDialog, closeDialog, dialogData: initialData } = useDialog()
@@ -20,7 +25,7 @@ export function ItemForm() {
 
   const [formData, setFormData] = useState({
     item_name: "",
-    category_id: "",
+    category_ids: [] as string[],
     rental_price: 0,
     total_stock: 1,
     available_stock: 1,
@@ -30,6 +35,7 @@ export function ItemForm() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(false)
+  const [open, setOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset form data when initialData changes or dialog opens
@@ -39,14 +45,14 @@ export function ItemForm() {
         console.log('Initial data for edit:', initialData)
         console.log('Category IDs:', initialData.category_ids)
         
-        // Get the first category ID if it exists
-        const categoryId = initialData.category_ids?.[0]?.id?.toString() || ""
+        // Get all category IDs
+        const categoryIds = initialData.category_ids?.map((cat: { id: number }) => cat.id.toString()) || []
         
-        console.log('Selected category ID:', categoryId)
+        console.log('Selected category IDs:', categoryIds)
         
         setFormData({
           item_name: initialData.item_name || "",
-          category_id: categoryId,
+          category_ids: categoryIds,
           rental_price: initialData.rental_price || 0,
           total_stock: initialData.total_stock || 0,
           available_stock: initialData.available_stock || 0,
@@ -58,7 +64,7 @@ export function ItemForm() {
         // Reset form for new item
         setFormData({
           item_name: "",
-          category_id: "",
+          category_ids: [],
           rental_price: 0,
           total_stock: 1,
           available_stock: 1,
@@ -84,13 +90,18 @@ export function ItemForm() {
       if (response.status === "success" && response.data) {
         console.log('Fetched categories:', response.data)
         setCategories(response.data)
-        
-        // If we're editing and have a category_id but no categories loaded yet,
-        // make sure the category is still selected after categories are loaded
-        if (initialData?.category_ids?.[0]?.id && formData.category_id === "") {
-          const categoryId = initialData.category_ids[0].id.toString()
-          console.log('Setting category ID after categories loaded:', categoryId)
-          setFormData(prev => ({ ...prev, category_id: categoryId }))
+
+        // If we're editing and have category_ids in initialData, ensure they're set
+        if (initialData?.category_ids?.length) {
+          const categoryIds = initialData.category_ids.map((cat: { id: number }) => cat.id.toString())
+          console.log('Setting category IDs after categories loaded:', categoryIds)
+          setFormData(prev => {
+            // Only update if the current category_ids are different
+            if (JSON.stringify(prev.category_ids) !== JSON.stringify(categoryIds)) {
+              return { ...prev, category_ids: categoryIds }
+            }
+            return prev
+          })
         }
       } else {
         toast({
@@ -125,8 +136,13 @@ export function ItemForm() {
     setFormData((prev) => ({ ...prev, [name]: numericValue }))
   }
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const handleCategorySelect = (categoryId: string) => {
+    setFormData(prev => {
+      const newCategoryIds = prev.category_ids.includes(categoryId)
+        ? prev.category_ids.filter(id => id !== categoryId)
+        : [...prev.category_ids, categoryId]
+      return { ...prev, category_ids: newCategoryIds }
+    })
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,11 +173,11 @@ export function ItemForm() {
         rental_price: formData.rental_price,
         total_stock: formData.total_stock,
         available_stock: formData.available_stock,
-        category_ids: formData.category_id ? [Number(formData.category_id)] : [],
+        category_ids: formData.category_ids.map(id => Number(id)),
       }
 
       console.log('Submitting item data:', itemData)
-      console.log('Selected category_id:', formData.category_id)
+      console.log('Selected category_ids:', formData.category_ids)
 
       if (initialData && initialData.id) {
         // Update existing item
@@ -235,23 +251,58 @@ export function ItemForm() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="category_id">Kategori</Label>
-            <Select
-              value={formData.category_id}
-              onValueChange={(value) => handleSelectChange("category_id", value)}
-              disabled={loadingCategories}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loadingCategories ? "Memuat kategori..." : "Pilih kategori"} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.category_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Kategori</Label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                  disabled={loadingCategories}
+                >
+                  {loadingCategories ? (
+                    "Memuat kategori..."
+                  ) : formData.category_ids.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {formData.category_ids.map((id) => {
+                        const category = categories.find((c) => c.id.toString() === id)
+                        return (
+                          <Badge key={id} variant="secondary" className="mr-1">
+                            {category?.category_name}
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    "Pilih kategori..."
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Cari kategori..." />
+                  <CommandEmpty>Tidak ada kategori yang ditemukan.</CommandEmpty>
+                  <CommandGroup>
+                    {categories.map((category) => (
+                      <CommandItem
+                        key={category.id}
+                        onSelect={() => handleCategorySelect(category.id.toString())}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.category_ids.includes(category.id.toString()) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {category.category_name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">

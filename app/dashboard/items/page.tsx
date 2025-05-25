@@ -287,9 +287,19 @@ function ItemsPageContent() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="font-normal">
-                              {getCategoryName(item)}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1">
+                              {item.category_ids && item.category_ids.length > 0 ? (
+                                item.category_ids.map((cat) => (
+                                  <Badge key={cat.id} variant="outline" className="font-normal">
+                                    {cat.name}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="font-normal">
+                                  Uncategorized
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>Rp {item.rental_price.toLocaleString("id-ID")}</TableCell>
                           <TableCell>

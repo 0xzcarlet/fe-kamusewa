@@ -17,8 +17,6 @@ import { DialogProvider, useDialog } from "@/components/dialog-context"
 
 function CustomersPageContent() {
   const { openDialog, setDialogData } = useDialog()
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -53,13 +51,18 @@ function CustomersPageContent() {
   }
 
   const handleAddCustomer = () => {
-    setEditingCustomer(undefined)
-    setIsFormOpen(true)
+    setDialogData({
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("customer-form")
   }
 
   const handleEditCustomer = (customer: Customer) => {
-    setEditingCustomer(customer)
-    setIsFormOpen(true)
+    setDialogData({
+      ...customer,
+      onSubmit: handleFormSubmit,
+    })
+    openDialog("customer-form")
   }
 
   const handleDeleteCustomer = (customer: Customer) => {
@@ -90,14 +93,9 @@ function CustomersPageContent() {
     openDialog("delete-confirmation")
   }
 
-  const handleFormSubmit = (data: Customer) => {
-    if (editingCustomer) {
-      // Update existing customer in the list
-      setCustomers((prev) => prev.map((c) => (c.id === data.id ? data : c)))
-    } else {
-      // Add new customer to the list
-      setCustomers((prev) => [...prev, data])
-    }
+  const handleFormSubmit = () => {
+    // Refresh the customers list after form submission
+    fetchCustomers()
   }
 
   // Filter customers based on search query
@@ -119,7 +117,7 @@ function CustomersPageContent() {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold">Manajemen Pelanggan</h1>
-              <p className="text-muted-foreground">Kelola data pelanggan yang terdaftar</p>
+              <p className="text-muted-foreground">Kelola data pelanggan yang menyewa barang</p>
             </div>
             <Button className="gap-1" onClick={handleAddCustomer}>
               <Plus className="h-4 w-4" /> Tambah Pelanggan
@@ -141,13 +139,12 @@ function CustomersPageContent() {
                   />
                 </div>
               </div>
-              <CardDescription>Total {filteredCustomers.length} pelanggan terdaftar</CardDescription>
+              <CardDescription>Total {filteredCustomers.length} pelanggan tersedia</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="flex justify-center items-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="ml-2">Memuat data...</p>
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <Table>
@@ -156,15 +153,15 @@ function CustomersPageContent() {
                       <TableHead>ID</TableHead>
                       <TableHead>Nama</TableHead>
                       <TableHead>Kontak</TableHead>
-                      <TableHead>No. Identitas</TableHead>
+                      <TableHead>Nomor Identitas</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCustomers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
-                          {searchQuery ? "Tidak ada pelanggan yang sesuai dengan pencarian" : "Belum ada pelanggan"}
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          Tidak ada data pelanggan
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -225,13 +222,10 @@ function CustomersPageContent() {
           </Card>
         </div>
       </main>
-      <CustomerForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        initialData={editingCustomer}
-        onSubmit={handleFormSubmit}
-      />
+
+      {/* Render all dialogs */}
       <DeleteConfirmation />
+      <CustomerForm />
       <Toaster />
     </div>
   )

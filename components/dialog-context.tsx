@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 
-type DialogType = "item-detail" | "item-form" | "delete-confirmation" | "logout" | null
+export type DialogType = "item-detail" | "item-form" | "delete-confirmation" | "logout" | "category-form" | "customer-form" | null
 
 interface DialogContextType {
   activeDialog: DialogType
